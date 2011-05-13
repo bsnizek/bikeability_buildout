@@ -1,0 +1,26 @@
+Mapmatcher.py will only work if the following dependencies are installed on your computer.
+
+Mapmatcher runs on Python 2.6
+
+1) Install spatialindex from source
+
+	svn co http://svn.gispython.org/spatialindex/spatialindex/trunk spatialindex
+	cd spatialindex
+	./configure
+	make 
+	make install
+	
+2) SIP
+
+	curl http://www.riverbankcomputing.com/static/Downloads/sip4/sip-4.12.2.tar.gz > sip-4.12.2.tar.gz
+	tar -xzvf sip-4.12.2.tar.gz
+	cd sip-4.12.2
+	./configure
+	make
+	make install
+	
+2) Python dependencies to be installed via easy_install
+   
+    easy_install RTree
+    easy_install PyYAML
+    easy_install Shapely

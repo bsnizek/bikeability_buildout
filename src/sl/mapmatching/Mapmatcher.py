@@ -3,8 +3,13 @@ Created on May 9, 2011
 
 @author: Bernhard Snizek <besn@life.ku.dk>
 @author: Pimin Kostas Kefaloukos
+@author: Hans Skov-Petersen <hsp@life.ku.dk>
 
+These modules are part of Bikeability.
 
+Read more about Bikeability her: http://www.bikeability.dk
+
+For dependencies pls refer to INSTALL.txt
 
     install spatialindex from source
     svn co http://svn.gispython.org/spatialindex/spatialindex/trunk
