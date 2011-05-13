@@ -1,22 +1,23 @@
-'''
-Created on May 9, 2011
-
-@author: Bernhard Snizek <besn@life.ku.dk>
-@author: Pimin Kostas Kefaloukos
-@author: Hans Skov-Petersen <hsp@life.ku.dk>
-
-These modules are part of Bikeability.
-
-Read more about Bikeability her: http://www.bikeability.dk
-
-For dependencies pls refer to INSTALL.txt
-
-    install spatialindex from source
-    svn co http://svn.gispython.org/spatialindex/spatialindex/trunk
-    easy_install RTree
-    easy_install PyYAML
-    easy_install SIP http://www.riverbankcomputing.com/static/Downloads/sip4/sip-4.12.2.tar.gz
+""" bikeability.dk
     
+    (c) 2011 Snizek & Skov-Petersen
+    bikeability@life.ku.dk
+    http://www.bikeability.dk
+    
+    License : GPL
+
+    Created on May 9, 2011
+
+    @author: Bernhard Snizek <besn@life.ku.dk>
+    @author: Pimin Kostas Kefaloukos
+    @author: Hans Skov-Petersen <hsp@life.ku.dk>
+
+    These modules are part of Bikeability.dk.
+
+    Read more about Bikeability her: http://www.bikeability.dk
+
+    Please refer to INSTALL for correct installation as well as information on 
+    dependencies etc. 
     
 '''
 
@@ -34,9 +35,11 @@ from rtree import Rtree
 from shapely.geometry import Point
 
 class Edge:
+    """An edge within the graph.
+    """
     
     def __init__(self, point2D_from, point2D_to, attributes=None, geometry=None):
-        """
+        """The nice constructor
         """
         self.from_node = point2D_from
         self.to_node = point2D_to
