@@ -1,7 +1,10 @@
 '''
 Created on May 9, 2011
 
-@author: bsnizek
+@author: Bernhard Snizek <besn@life.ku.dk>
+@author: Pimin Kostas Kefaloukos
+
+
 
     install spatialindex from source
     svn co http://svn.gispython.org/spatialindex/spatialindex/trunk
