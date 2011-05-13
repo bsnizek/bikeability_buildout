@@ -18,8 +18,7 @@
 
     Please refer to INSTALL for correct installation as well as information on 
     dependencies etc. 
-    
-'''
+"""
 
 import networkx as nx
 from sl.mapmatching.utils import GraphToShape
@@ -35,7 +34,7 @@ from rtree import Rtree
 from shapely.geometry import Point
 
 class Edge:
-    """An edge within the graph.
+    """An edge of the graph.
     """
     
     def __init__(self, point2D_from, point2D_to, attributes=None, geometry=None):
