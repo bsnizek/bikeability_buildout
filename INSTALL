@@ -24,3 +24,8 @@ Mapmatcher runs on Python 2.6
     easy_install RTree
     easy_install PyYAML
     easy_install Shapely
+    easy_install pygpx
+    
+3) install NumPy DMG File
+		
+	http://www.kyngchaos.com/files/software/python/NumPy-1.5.1-1.dmg

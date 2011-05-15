@@ -27,10 +27,9 @@ try:
 except ImportError:
     raise ImportError("read_shp() requires OGR: http://www.gdal.org/")
 import sys
-import shapely.wkt
-
 from routefinder import RouteFinder
 from rtree import Rtree
+import shapely.wkt
 from shapely.geometry import Point
 
 class Edge:
@@ -112,22 +111,7 @@ class Node:
     def getGeometry(self):
         return self.geometry
         
-class GPSPoint:
-    
-    def __init__(self, point, attributes):
-        self.point = point
-        self.attributes = attributes
 
-    def getPoint(self):
-        return self.point
-    
-    def getAttributes(self):
-        return self.attributes
-    
-    def getGeometry(self):
-        """Returns the point as a Shapely Point object
-        """
-        return self.point
 
 class MapMatcher():
     
