@@ -98,17 +98,21 @@ class GPSTrackSegment(GPXTrackSeg):
 class GPSTrackPoint(GPXTrackPt):
     """A GPS point with a slight modficiation
     """
-    def __init__(self, node, version, point=None, attributes={}):
+    def __init__(self, node, version, geometry=None, attributes={}):
         """Construct a trackpint given an XML node."""
-        self.point = point
-        self.attributes = attributes
+
         self.version = version
+        self.attributes = {}
         
-        if point:
-            import pdb;pdb.set_trace()
+        if geometry:
+            self.geometry = geometry
+            self.attributes = attributes
+            self.version = u"1.0"
         else:
+
             self.lat = float(node.getAttribute("lat"))
             self.lon = float(node.getAttribute("lon"))
+            
             self.elevation = None
             self.time = None
             for node in node.childNodes:
@@ -116,22 +120,41 @@ class GPSTrackPoint(GPXTrackPt):
                     continue
                 if node.nodeName == "time":
                     self.time = datetime_iso(node.firstChild.data)
+                    self.attributes['time'] = self.time
                 elif node.nodeName == "ele":
                     self.elevation = float(node.firstChild.data)
                 else:
                     raise ValueError, "Can't handle node", node.nodeName
 
-
+            if self.elevation:
+                self.geometry   = Point(
+                                  float(self.lat),
+                                  float(self.lon),
+                                  float(self.elevation)
+                                  )
+            else:
+                self.geometry   = Point(
+                                  float(self.lat),
+                                  float(self.lon)
+                                  )
+            
     def getPoint(self):
-        return self.point
+        return self.geometry
     
     def getAttributes(self):
+        """Returns the attributes of this TrackPoint
+        """
         return self.attributes
     
     def getGeometry(self):
-        """Returns the point as a Shapely Point object
+        """Returns the geometry of this GPSTrackPoint as a Shapely Point object.
         """
-        return self.point
+        return self.geometry
+    
+    def getGeometry2D(self):
+        """Returns the geometry as a 
+        """
+        return Point(self.geometry.x, self.geometry.y)
 
 class GPS:
     
@@ -166,6 +189,7 @@ class GPS:
         """Reads GPS data from a ESRI Shapefile.
         """
         
+
         self.creator = "Generated from a Shaopefile."
         
         self.gpsFile = ogr.Open(inFile)
@@ -196,7 +220,7 @@ class GPS:
 
                 p = GPSTrackPoint(None,
                                   "1.0",
-                                  point=shapely.wkt.loads(geometry.ExportToWkt()), 
+                                  geometry=shapely.wkt.loads(geometry.ExportToWkt()), 
                                   attributes=attributes )
                 
                 
@@ -254,10 +278,10 @@ if __name__ == '__main__':
     gpx = GPS()
     print gpx
     
-    gpx.readFromGPXFile("/Users/bsnizek/pymapmatching2/testdata/nztrip-tracks.gpx")
-    # gpx.readFromShapeFile("/Users/bsnizek/pymapmatching2/testdata/GPS_Points.shp")
+    # gpx.readFromGPXFile("/Users/bsnizek/pymapmatching2/testdata/nztrip-tracks.gpx")
+    gpx.readFromShapeFile("/Users/bsnizek/pymapmatching2/testdata/GPS_Points.shp")
     
     points = gpx.getGPSPoints()
     
-    print points[0].getGeometry()
+    print points[0].getAttributes()
     

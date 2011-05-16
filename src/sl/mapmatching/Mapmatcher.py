@@ -21,7 +21,7 @@
 """
 
 import networkx as nx
-from sl.mapmatching.utils import GraphToShape
+from utils import GraphToShape
 try:
     from osgeo import ogr
 except ImportError:
@@ -31,6 +31,8 @@ from routefinder import RouteFinder
 from rtree import Rtree
 import shapely.wkt
 from shapely.geometry import Point
+
+import pdb;pdb.set_trace()
 
 class Edge:
     """An edge of the graph.
@@ -116,6 +118,7 @@ class Node:
 class MapMatcher():
     
     def __init__(self):
+        self.GPS = GPS()
         self.idx = Rtree()
         self.nodeidx = Rtree()
         self.G = None
@@ -125,7 +128,6 @@ class MapMatcher():
         self.gps_points = [];
         self.edge_id__count = {}
         self.node_counter__node = {}
-        
         
     def saveGraph(self, filename):
         nx.write_yaml(self.G,filename)
@@ -236,30 +238,35 @@ class MapMatcher():
         self.routefinder = RouteFinder(self.G)
 
     def readGPS(self, inFile):
-        self.gpsFile = ogr.Open(inFile)
-        if self.gpsFile is None:
-            print "Failed to open " + inFile + ".\n"
-            sys.exit( 1 )
-        else:
-            print "GPS file successfully read"
-            
-            self.shapelyGPS = mm.gpsFile.GetLayer(0)
-            
-            lyrcount = self.gpsFile.GetLayerCount()
-            
-            for lyrindex in xrange(lyrcount):
-                lyr = self.gpsFile.GetLayerByIndex(lyrindex)
-                flds = [x.GetName() for x in lyr.schema]
-            
-                
-            for i in range(self.shapelyGPS.GetFeatureCount()):
-                feature = self.shapelyGPS.GetFeature(i)
-                geometry = feature.GetGeometryRef()
-                
-                flddata = self.getfieldinfo(lyr, feature, flds)
-                attributes = dict(zip(flds, flddata))
-                p = GPSPoint(shapely.wkt.loads(geometry.ExportToWkt()), attributes)
-                self.gps_points.append(p)
+        """Parses a shapefile and build the GPS object
+        """
+        self.GPS.readFromShapeFile(inFile)
+        self.gps_points = self.GPS.getGPSPoints()
+        
+#        self.gpsFile = ogr.Open(inFile)
+#        if self.gpsFile is None:
+#            print "Failed to open " + inFile + ".\n"
+#            sys.exit( 1 )
+#        else:
+#            print "GPS file successfully read"
+#            
+#            self.shapelyGPS = mm.gpsFile.GetLayer(0)
+#            
+#            lyrcount = self.gpsFile.GetLayerCount()
+#            
+#            for lyrindex in xrange(lyrcount):
+#                lyr = self.gpsFile.GetLayerByIndex(lyrindex)
+#                flds = [x.GetName() for x in lyr.schema]
+#            
+#                
+#            for i in range(self.shapelyGPS.GetFeatureCount()):
+#                feature = self.shapelyGPS.GetFeature(i)
+#                geometry = feature.GetGeometryRef()
+#                
+#                flddata = self.getfieldinfo(lyr, feature, flds)
+#                attributes = dict(zip(flds, flddata))
+#                p = GPSPoint(shapely.wkt.loads(geometry.ExportToWkt()), attributes)
+#                self.gps_points.append(p)
                 
     def maxGPSDistance(self):
         """Calculate the maximum distance of two consecutive GPS Points
@@ -401,6 +408,7 @@ if __name__ == '__main__':
     NETWORK_ELIMINATION = False
 
     mm = MapMatcher()
+    
     mm.openShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SparseNetwork.shp")
     
     print "Road network imported"
