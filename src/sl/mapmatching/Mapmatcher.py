@@ -22,6 +22,7 @@
 
 import networkx as nx
 from utils import GraphToShape
+from sl.gps.gps import GPS
 try:
     from osgeo import ogr
 except ImportError:
@@ -31,8 +32,6 @@ from routefinder import RouteFinder
 from rtree import Rtree
 import shapely.wkt
 from shapely.geometry import Point
-
-import pdb;pdb.set_trace()
 
 class Edge:
     """An edge of the graph.
