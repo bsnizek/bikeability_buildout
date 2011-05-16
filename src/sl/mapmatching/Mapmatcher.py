@@ -34,7 +34,7 @@ import shapely.wkt
 from shapely.geometry import Point
 
 class Edge:
-    """An edge of the graph.
+    """A nifte edge class for our graph.
     """
     
     def __init__(self, point2D_from, point2D_to, attributes=None, geometry=None):
@@ -63,25 +63,38 @@ class Edge:
             self.maxy = sfy2
         
     def getAttributes(self):
+        """Returns our attributes as a dict
+        """
         return self.attributes
         
     def getMinX(self):
+        """Returns the minimum latitude.
+        """
         return self.minx
-        
     
     def getMaxX(self):
+        """Returns the maximum latitude.
+        """
         return self.maxx
     
     def getMinY(self):
+        """Returns the minimum longitude
+        """
         return self.miny
     
     def getMaxY(self):
+        """Returns the maximum longitude
+        """
         return self.maxy
     
     def getLength(self):
+        """Returns the length of the edge (takes vertices into consideration)
+        """
         return self.geometry.length
     
     def getToNode(self):
+        """Returns the to/target node of the edge.
+        """
         return self.to_node
     
     def getGeometry(self):
@@ -90,6 +103,8 @@ class Edge:
         return self.geometry
     
     def setAttributes(self, attributes):
+        """Sets attributes (dict)
+        """
         self.attributes = attributes
         
 class Node:
@@ -101,20 +116,30 @@ class Node:
         self.geometry = Point(point[0], point[1])
          
     def getOutEdges(self):
+        """Returns 
+        """
         return [edge.get("edge") for edge in  mm.G[self].values()]
     
     def getPoint(self):
+        """Returns the geometry. compatibility method; see getGeometry()
+        """
         return self.point
     
     def getAttributes(self):
+        """Returns the attributes as a dict.
+        """
         return self.attributes
     
     def getGeometry(self):
+        """Returns the geometry (Shapely Point) of this node.
+        """
         return self.geometry
         
 
 
 class MapMatcher():
+    """A very nice MapMatching class
+    """
     
     def __init__(self):
         self.GPS = GPS()
@@ -129,14 +154,26 @@ class MapMatcher():
         self.node_counter__node = {}
         
     def saveGraph(self, filename):
+        """Saves the graph as a YAML file
+        """
         nx.write_yaml(self.G,filename)
         
+    def readGraphFromYAMLFile(self, filename):
+        """Loads a graph from an YAML file. 
+        """
+        self.G = nx.read_yaml(filename)
+        # TODO: buiild up the indexes !!!
+        
+        
     def addNodeToIndex(self, node):
+        """Adds a node to the node index (RTree)
+        """
         self.nodeidx.add(self.nodecounter, (node.getPoint()[0], node.getPoint()[1]), obj=node)
         
     
     def addEdgeToIndex(self, edge): 
-
+        """Add an edge to the edhe index.
+        """
         self.idx.add(self.edgecounter, (edge.getMinX(), edge.getMinY(), edge.getMaxX(), edge.getMaxY()),obj=edge)
         # print "%d/%d -> %d/%d" % (edge.getMinX(), edge.getMinY(), edge.getMaxX(), edge.getMaxY())
         self.edgeindex_edge[self.edgecounter] = edge
@@ -153,11 +190,6 @@ class MapMatcher():
     def getfieldinfo(self, lyr, feature, flds):
             f = feature
             return [f.GetField(f.GetFieldIndex(x)) for x in flds]
-     
-    def readGraphFromYAMLFile(self, filename):
-        self.G = nx.read_yaml(filename)
-        
-        
      
     def addlyr(self, G,lyr, fields):
         
@@ -223,6 +255,9 @@ class MapMatcher():
         return G
             
     def shapeToGraph(self, inFile, uniqueId="FID"):
+        """Loads a shapefile and builds the graph.
+        uniqueId is the name of a unique field in the shape file. 
+        """
         # self.G = nx.readwrite.nx_shp.read_shp(inFile)
         
         self.G = nx.DiGraph()
@@ -241,36 +276,12 @@ class MapMatcher():
         """
         self.GPS.readFromShapeFile(inFile)
         self.gps_points = self.GPS.getGPSPoints()
-        
-#        self.gpsFile = ogr.Open(inFile)
-#        if self.gpsFile is None:
-#            print "Failed to open " + inFile + ".\n"
-#            sys.exit( 1 )
-#        else:
-#            print "GPS file successfully read"
-#            
-#            self.shapelyGPS = mm.gpsFile.GetLayer(0)
-#            
-#            lyrcount = self.gpsFile.GetLayerCount()
-#            
-#            for lyrindex in xrange(lyrcount):
-#                lyr = self.gpsFile.GetLayerByIndex(lyrindex)
-#                flds = [x.GetName() for x in lyr.schema]
-#            
-#                
-#            for i in range(self.shapelyGPS.GetFeatureCount()):
-#                feature = self.shapelyGPS.GetFeature(i)
-#                geometry = feature.GetGeometryRef()
-#                
-#                flddata = self.getfieldinfo(lyr, feature, flds)
-#                attributes = dict(zip(flds, flddata))
-#                p = GPSPoint(shapely.wkt.loads(geometry.ExportToWkt()), attributes)
-#                self.gps_points.append(p)
                 
     def maxGPSDistance(self):
         """Calculate the maximum distance of two consecutive GPS Points
         """
         # TODO check whether GPS points are already there
+        # TODO: move into sl.gps.GPS()
         maxDistance = 0
         gps_point = self.gps_points[0]
         for gpspoint in self.gps_points:
@@ -296,6 +307,8 @@ class MapMatcher():
             self.addPointCountToEdge(nearest_edge)
             
     def addPointCountToEdge(self, edge):
+        """Increments the point counter for the given edge by one.
+        """
         attributes = edge.getAttributes()
         if self.edge_id__count.has_key(attributes.get(self.shapeFileUniqueId)):
             self.edge_id__count[attributes.get(self.shapeFileUniqueId)] = self.edge_id__count[attributes.get(self.shapeFileUniqueId)] + 1
@@ -321,11 +334,16 @@ class MapMatcher():
     
     
     def getNearestNode(self, point):
+        """Returns the closest node to a GPS point.
+        """
         nodes = mm.nodeidx.nearest((point.getPoint().x, point.getPoint().y), objects=True)
         nodes = [n for n in nodes]
         return nodes[0].object
         
     def findRoute(self, returnNonSelection=False):
+        """Finds a route from the node closest to the first GPS point to 
+        the node closest to the latest GPS point. 
+        """
         
         # pick the start and end GPS points # TODO: sort GPS Points first
         start_point = self.gps_points[0]
@@ -371,7 +389,8 @@ class MapMatcher():
             return selected
         
     def eliminiateEmptyEdges(self, distance = 100):
-        """Loops through the GPS pointset and selects edges within a boundary of <distance> meters
+        """Loops through the GPS pointset and selects edges within a boundary 
+        of <distance> meters
         """
         print "Edge elimination started"
         

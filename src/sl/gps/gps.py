@@ -20,11 +20,9 @@
     dependencies etc. 
 """
 
-from pygpx import GPX, GPXTrackPt, GPXTrack, GPXTrackSeg, datetime_iso
+from pygpx import GPXTrackPt, GPXTrack, GPXTrackSeg, datetime_iso
 import sys
-import math
 from xml.dom.minidom import parse
-import datetime
 try:
     from osgeo import ogr
 except ImportError:
