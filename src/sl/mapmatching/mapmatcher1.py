@@ -33,6 +33,8 @@ from rtree import Rtree
 import shapely.wkt
 from shapely.geometry import Point
 
+INTERSECTION_MASK = 1
+
 class Edge:
     """A nifte edge class for our graph.
     """
@@ -96,7 +98,12 @@ class Edge:
         """Returns the to/target node of the edge.
         """
         return self.to_node
-    
+
+    def getFromNode(self):
+        """Returns the to/target node of the edge.
+        """
+        return self.from_node
+   
     def getGeometry(self):
         """Returns the edges geometry as a Shapely Multipoint object
         """
@@ -107,6 +114,17 @@ class Edge:
         """
         self.attributes = attributes
         
+    def getOutNode(self, label):
+        to_counter = self.getToNode().getAttributes().get("nodecounter")
+        from_counter = self.getFromNode().getAttributes().get("nodecounter")
+        label_counter = label.getNode().getAttributes().get("nodecounter")
+        
+        if label_counter == to_counter:
+            return self.getFromNode()
+        else:
+            return self.getToNode()
+        
+        
 class Node:
     
     def __init__(self, point, attributes=None):
@@ -116,9 +134,14 @@ class Node:
         self.geometry = Point(point[0], point[1])
          
     def getOutEdges(self):
-        """Returns 
+        """Returns the star of Edges from this node
         """
-        return [edge.get("edge") for edge in  mm.G[self].values()]
+        edges = []
+        for edict in mm.G[self].values():
+            for k in edict.keys():
+                edges.append(edict.get(k).get("edge"))
+        
+        return edges
     
     def getPoint(self):
         """Returns the geometry. compatibility method; see getGeometry()
@@ -168,7 +191,10 @@ class MapMatcher():
     def addNodeToIndex(self, node):
         """Adds a node to the node index (RTree)
         """
-        self.nodeidx.add(self.nodecounter, (node.getPoint()[0], node.getPoint()[1]), obj=node)
+        # self.nodeidx.add(self.nodecounter, (node.getPoint()[0], node.getPoint()[1]), obj=node)
+        self.nodeidx.add(self.nodecounter, (node.getPoint()[0], node.getPoint()[1], node.getPoint()[0], node.getPoint()[1]))
+
+        self.node_counter__node[self.nodecounter] = node
         
     
     def addEdgeToIndex(self, edge): 
@@ -201,56 +227,149 @@ class MapMatcher():
             g = f.geometry()
             attributes = dict(zip(fields, flddata))
             attributes["ShpName"] = lyr.GetName()
-            if g.GetGeometryType() == 1: #point
-                G.add_node((g.GetPoint_2D(0)), attributes)
+            
             if g.GetGeometryType() == 2: #linestring
                 last = g.GetPointCount() - 1
-                
                 p_from = g.GetPoint_2D(0)
                 p_to = g.GetPoint_2D(last)
+                 
+                 # check whether we have a node in the index
                 
-                if point_coords__nodes.get(p_from):
+                intersection_mask = (p_from[0]-INTERSECTION_MASK/2, 
+                                     p_from[1]-INTERSECTION_MASK/2,
+                                     p_from[0]+INTERSECTION_MASK/2, 
+                                     p_from[1]+INTERSECTION_MASK/2)
                 
-                    # print "node found"
-                    pfrom = point_coords__nodes.get(p_from)  
+                results = list(self.nodeidx.intersection(intersection_mask))
                 
-                else:
+                if len(results)==0:
+                    
+                    print "New from-node " + str(self.nodecounter) + " for edge " + str(attributes.get("ID_NR")) + "."
+                    
                     
                     pfrom = Node(p_from, attributes={'from_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
-                    self.nodecounter = self.nodecounter + 1 
-                    point_coords__nodes[p_from] = pfrom
-                
-                if point_coords__nodes.get(p_to):
-                
-                    pto = point_coords__nodes.get(p_to)  
-                    # print "node found"    
-                
+                    self.node_counter__node[self.nodecounter] = pfrom
+                    self.nodeidx.add(self.nodecounter, (p_from[0], 
+                                                        p_from[1], 
+                                                        p_from[0], 
+                                                        p_from[1]))
+                    # print p_from
+                    self.nodecounter = self.nodecounter + 1
                 else:
-                
-                    pto = Node(p_to, attributes={'to_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
-                    self.nodecounter = self.nodecounter + 1 
-                    point_coords__nodes[p_to] = pto
-                
-                shly_geom = shapely.wkt.loads(g.ExportToWkt())
-                e = Edge(pfrom, pto, attributes, geometry = shly_geom)
-                            
-                G.add_edge(pfrom, pto, {"edge": e, "edgecounter" : self.edgecounter})
+                    print len(results)
+                    print "From-node " + str(results[0]) + " recycled for edge " + str(attributes.get("ID_NR")) + "."
+                    
+                    pfrom = self.node_counter__node[results[0]]
+                    
 
-                # we pull the nodes out of the graph again to index them
-                edges_dict = nx.get_edge_attributes(G,"edgecounter")
+                intersection_mask = (p_to[0]-INTERSECTION_MASK/2, 
+                                     p_to[1]-INTERSECTION_MASK/2,
+                                     p_to[0]+INTERSECTION_MASK/2, 
+                                     p_to[1]+INTERSECTION_MASK/2)
                 
-                # import pdb;pdb.set_trace()
+                # print intersection_mask
                 
-                edges_keys = edges_dict.keys()
-                for k in edges_keys:
-                    if self.edgecounter == edges_dict[k]:
-                        self.node_counter__node[k[0].getAttributes()['nodecounter']] = k[0]
-                        self.node_counter__node[k[1].getAttributes()['nodecounter']] = k[1]
-                        self.addNodeToIndex(k[0])
-                        self.addNodeToIndex(k[1])
+                results = list(self.nodeidx.intersection(intersection_mask))
+
+                if len(results)==0:
+                    
+                    print "New to-node " + str(self.nodecounter) + " for edge " + str(attributes.get("ID_NR")) + "."
+                    
+                    pto = Node(p_to, attributes={'to_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
+                    self.node_counter__node[self.nodecounter] = pto
+                    self.nodeidx.add(self.nodecounter, (p_to[0], 
+                                                        p_to[1], 
+                                                        p_to[0], 
+                                                        p_to[1]))
+                    self.nodecounter = self.nodecounter + 1
+                else:
+                    
+                    print "To-node " + str(results[0]) +  " recycled for edge " + str(attributes.get("ID_NR")) + "."
+                    
+                    pto = self.node_counter__node[results[0]]
+                    
+                    
+                shly_geom = shapely.wkt.loads(g.ExportToWkt())
                 
-                # let us throw the Edge into the index
+                e = Edge(pfrom, pto, attributes, geometry = shly_geom)
+                
+                # G.add_edge(pfrom, pto, {"edge": e, "edgecounter" : self.edgecounter})
+                
+                G.add_edge(pfrom, pto, edge=e, edgecounter=self.edgecounter)
+                
                 self.addEdgeToIndex(e)
+           
+            #if g.GetGeometryType() == 1: #point
+            #    G.add_node((g.GetPoint_2D(0)), attributes)
+            
+#            if g.GetGeometryType() == 2: #linestring
+#                last = g.GetPointCount() - 1
+#                
+#                p_from = g.GetPoint_2D(0)
+#                p_to = g.GetPoint_2D(last)
+#                
+#                if point_coords__nodes.get(p_from):
+#                
+#                    pfrom = point_coords__nodes.get(p_from)  
+#                    print "node " + str(pfrom.getAttributes().get("nodecounter")) + " edge " + str(attributes.get('ID_NR'))
+#                
+#                else:
+#                    
+#                    pfrom = Node(p_from, attributes={'from_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
+#                    self.nodecounter = self.nodecounter + 1 
+#                    point_coords__nodes[p_from] = pfrom
+#                
+#                if point_coords__nodes.get(p_to):
+#                
+#                    pto = point_coords__nodes.get(p_to)  
+#                    print "node " + str(pto.getAttributes().get("nodecounter")) + " edge " + str(attributes.get('ID_NR')) 
+#                
+#                else:
+#                
+#                    pto = Node(p_to, attributes={'to_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
+#                    self.nodecounter = self.nodecounter + 1 
+#                    point_coords__nodes[p_to] = pto
+#                
+#                shly_geom = shapely.wkt.loads(g.ExportToWkt())
+#                e = Edge(pfrom, pto, attributes, geometry = shly_geom)
+#                            
+#                G.add_edge(pfrom, pto, {"edge": e, "edgecounter" : self.edgecounter})
+#
+#                # we pull the nodes out of the graph again to index them
+#                edges_dict = nx.get_edge_attributes(G,"edgecounter")
+#                
+#                # import pdb;pdb.set_trace()
+#                
+#                edges_keys = edges_dict.keys()
+#                for k in edges_keys:
+#                    if self.edgecounter == edges_dict[k]:
+#                        self.node_counter__node[k[0].getAttributes()['nodecounter']] = k[0]
+#                        self.node_counter__node[k[1].getAttributes()['nodecounter']] = k[1]
+#                        self.addNodeToIndex(k[0])
+#                        self.addNodeToIndex(k[1])
+#                
+#                # let us throw the Edge into the index
+#                self.addEdgeToIndex(e)
+#                
+##                # add an edge in the other direction
+##                e2 = Edge(pto, pfrom, attributes, geometry = shly_geom)
+##                G.add_edge(pto, pfrom, {"edge": e2, "edgecounter" : self.edgecounter})
+##                
+##                edges_dict = nx.get_edge_attributes(G,"edgecounter")
+##                
+##                # import pdb;pdb.set_trace()
+##                
+##                edges_keys = edges_dict.keys()
+##                for k in edges_keys:
+##                    if self.edgecounter == edges_dict[k]:
+##                        self.node_counter__node[k[0].getAttributes()['nodecounter']] = k[0]
+##                        self.node_counter__node[k[1].getAttributes()['nodecounter']] = k[1]
+##                        self.addNodeToIndex(k[0])
+##                        self.addNodeToIndex(k[1])
+##                
+##                # let us throw the Edge into the index
+##                self.addEdgeToIndex(e2)
+                
                 
         return G
             
@@ -260,7 +379,7 @@ class MapMatcher():
         """
         # self.G = nx.readwrite.nx_shp.read_shp(inFile)
         
-        self.G = nx.DiGraph()
+        self.G = nx.MultiGraph()
         self.shapeFileUniqueId = uniqueId
         
         lyrcount = self.shapeFile.GetLayerCount() # multiple layers indicate a directory 
@@ -336,9 +455,8 @@ class MapMatcher():
     def getNearestNode(self, point):
         """Returns the closest node to a GPS point.
         """
-        nodes = mm.nodeidx.nearest((point.getPoint().x, point.getPoint().y), objects=True)
-        nodes = [n for n in nodes]
-        return nodes[0].object
+        nodes = list(mm.nodeidx.nearest((point.getPoint().x, point.getPoint().y)))
+        return self.node_counter__node.get(nodes[0])
         
     def findRoute(self, returnNonSelection=False):
         """Finds a route from the node closest to the first GPS point to 
@@ -367,16 +485,24 @@ class MapMatcher():
         for label in label_list:
             number_of_points = 0
             # we sum up the number of points and relate them to the length of the route
+            print label
             for edge in label.getEdges():
+
                 edge_id = edge.getAttributes().get(self.shapeFileUniqueId)
-                number_of_points = number_of_points + self.edge_id__count.get(edge_id)
-                
+                number_of_points = number_of_points + self.edge_id__count.get(edge_id, 0)
+                print "      ", number_of_points
             #we add the scores to a dict
-            label_scores.append((label, number_of_points/label.getLength()))
+            
+            if number_of_points > 1:
+                label_scores.append((label, number_of_points/label.getLength()))
+            
+        # print label_scores
         
         # and extract the maximum score
         score = 0
         selected = None
+        
+        import pdb;pdb.set_trace()
         
         for ls in label_scores:
             if ls[1] > score:
@@ -434,6 +560,15 @@ if __name__ == '__main__':
     print "Parsing road network -> graph"
     mm.shapeToGraph("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SparseNetwork.shp", uniqueId="ID_NR")
     print "Graph generated"
+    
+    nodes = mm.node_counter__node.values()
+    
+    for node in nodes:
+        edgeStr = ""
+        for edge in node.getOutEdges():
+            edgeStr = edgeStr + ", " + str(edge.getAttributes().get("ID_NR"))
+            # print edge.getAttributes()
+        print node.getAttributes() , ": " , edgeStr
     
     #mm.saveGraph("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Network.yaml")
     #print "Graph saved"

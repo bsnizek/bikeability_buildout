@@ -122,6 +122,7 @@ class RouteFinder():
     def iterative_expansion(self, label):
         print "Checking Label at " , label.getNode().getAttributes()
         if label.getNode() is self.end_node:
+            label.saveAsShapeFile2("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/")
             self.results.append(label)
             return None
         else:
@@ -157,15 +158,12 @@ class RouteFinder():
         self.start_node = start_node
         self.end_node = end_node
         
-        self.startLabel = Label(self.start_node, parentLabel=None, parentEdge=None, endNode=self.end_node, routeFinder=self)
-        self.startLabel.expand(MAXIMUM_LENGTH, MINIMUM_LENGTH, endNode=self.end_node)
+        print "startnode " + str(self.start_node.getAttributes()) + " " + str(self.start_node.getPoint())
+        print "endnode " + str(self.end_node.getAttributes())
         
-        # print "startnode " + str(self.start_node.getAttributes()) + " " + str(self.start_node.getPoint())
-        # print "endnode " + str(self.end_node.getAttributes())
+        currentlabel = Label(self.start_node)
         
-        #currentlabel = Label(self.start_node)
-        
-        #self.iterative_expansion(currentlabel)
+        self.iterative_expansion(currentlabel)
                
         return self.results
                 

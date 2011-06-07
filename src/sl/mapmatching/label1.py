@@ -25,90 +25,17 @@ class Label:
     """The label for the labelling algorithm
     """
     
-    def __init__(self, node, parentLabel=None, parentEdge=None, endNode = None, routeFinder = None, length=0):
+    def __init__(self, node, parent=None, back_edge=None, length=1):
         self.node = node
-        self.parentLabel = parentLabel
-        self.parentEdge = parentEdge
-        self.star = node.getOutEdges()
-        self.endNode = endNode
-        self.routeFinder = routeFinder
+        self.parent = parent
+        self.back_edge = back_edge
         self.length = length
-        print "Label() at " + str(node.getAttributes().get("nodecounter"))
-#        if parentLabel:
-#            print "parentLabel ", parentLabel.getAttributes().get("nodecounter")
-            
-        # import pdb;pdb.set_trace()
-        
-    def expand(self, maxDist=0, minDist=0, endNode=None):
-        """Expands the node
-        """
-        
-        # print "Starting to expand ", self.getNode().getAttributes().get("nodecounter") 
-        
-        self.edges = self.getStar()
- 
-        while len(self.edges) > 0:
-            print "."
-            edge = self.edges.pop()
-            
-            # print "instantiating to outnode ", edge.getOutNode(self).getAttributes().get("nodecounter")
-            
-            # import pdb;pdb.set_trace()
-            if self.parentLabel:
-                length = self.parentLabel.getLength() + edge.getLength()
-            else:
-                length = edge.getLength()
-            
-            currentLabel = Label(edge.getOutNode(self), 
-                                 parentLabel = self, 
-                                 parentEdge=edge, 
-                                 endNode=self.endNode, 
-                                 routeFinder=self.routeFinder, 
-                                 length=length)
-            
-            check = currentLabel.checkValidity(edge.getOutNode(self), self)
-            
-            # print check
-            
-            if check == 0:
-                
-                print "route found" 
-                self.routeFinder.results.append(self)
-                # self.saveAsShapeFile('Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/x' + str(len(self.routeFinder.results)) + '.shp' )
-                
-            
-            if check == 2:
-                pass
-            
-            if check == 1:
-                currentLabel.expand(maxDist=0, minDist=0, endNode=self.endNode)
-        
-        
-                
-    def checkValidity(self, node, parentNode):
-        if self.getNode() == self.endNode:
-            return 0
-
-        if self.getOccurancesOfNode(parentNode)>1:
-            # print "parent Node occurance."
-            return 2
-        else:
-            return 1
-            
-    def getBackEdge(self):
-        """Returns the edge that points backwards in the label hierarchy.
-        """
-        return self.parentEdge
-            
-        
-    def getStar(self):
-        return self.star
-        
+        print "Label at " + str(node.getAttributes()) + " instantiated"
         
     def getParent(self):
         """Returns the parent label
         """
-        return self.parentLabel
+        return self.parent
     
     def getNode(self):
         """Returns the current node
@@ -118,13 +45,15 @@ class Label:
     def getAttributes(self):
         return self.getNode().getAttributes()
     
-
+    def getBackEdge(self):
+        """Returns the edge that points backwards in the label hierarchy.
+        """
+        return self.back_edge
     
     def getLength(self):
         """Returns the length of the node (in real world units)
         """
         return self.length
-    
     
     def getOccurancesOfEdge(self, edge):
         """Returns the occurance of an edge in relation to the edge hierarchy
@@ -192,9 +121,7 @@ class Label:
         if filename:
             driverName = "ESRI Shapefile"
             drv = ogr.GetDriverByName( driverName )
-            
-            if drv:
-                drv.DeleteDataSource(filename)
+            drv.DeleteDataSource(filename)
         
             if drv is None:
                 print "%s driver not available.\n" % driverName    
@@ -213,4 +140,32 @@ class Label:
                 feat.SetGeometryDirectly(line)
                 lyr.CreateFeature(feat)
                 feat.Destroy()
+                
+    def saveAsShapeFile2(self, base=None):
+        """Saves the route as a an ESRIShapefile
+        """
+        if base:
+            driverName = "ESRI Shapefile"
+            drv = ogr.GetDriverByName( driverName )
+            drv.DeleteDataSource(base + str(self.getNode().getAttributes().get("nodecounter")) + ".shp")
+        
+            if drv is None:
+                print "%s driver not available.\n" % driverName    
             
+            ds = drv.CreateDataSource( base + str(self.getNode().getAttributes().get("nodecounter")) + ".shp")
+            
+            lyr = ds.CreateLayer( "blabla", None, ogr.wkbLineString )
+            if lyr is None:
+                print "Layer creation failed.\n"
+            
+            for edge in self.getEdges():
+                feat = ogr.Feature( feature_def=lyr.GetLayerDefn())
+                line = ogr.Geometry(type=ogr.wkbLineString)
+#                wkb = edge.getGeometry().to_wkb()
+                for coord in edge.getGeometry().coords:
+                    line.AddPoint_2D(coord[0],coord[1])
+                feat.SetGeometryDirectly(line)
+                lyr.CreateFeature(feat)
+                feat.Destroy()
+                
+            import pdb;pdb.set_trace()

@@ -38,7 +38,6 @@ class RouteFinder():
         """
         self.graph = graph
         self.bridges = []
-        self.results = []
         
         
     def expandLabel(self, parentLabel):
@@ -113,61 +112,45 @@ class RouteFinder():
             expansion.append(newLabel)
             
         return expansion
-    
-    def checkNodeOverlap(self, label):
-        nc = label.getOccurancesOfNode(label.getNode())
-        
-        return nc > NODE_OVERLAP
-    
-    def iterative_expansion(self, label):
-        print "Checking Label at " , label.getNode().getAttributes()
-        if label.getNode() is self.end_node:
-            self.results.append(label)
-            return None
-        else:
-            print "Expanding Label at " , label.getNode().getAttributes()
-            labels = self.expandLabel2(label)
-            for label2 in labels:
-                
-                print "Checking node overlap for node ", label2.getNode().getAttributes().get("nodecounter")
-                
-                if not self.checkNodeOverlap(label2):
-                    self.iterative_expansion(label2)
-                else:
-                    print "--"
-            
-            
-          
-    def expandLabel2(self, parentLabel):
-        """
-        Expands a label and returns the labels of the expanded edges
-        """
-        
-        out_edges = parentLabel.getNode().getOutEdges()
-        for oe in out_edges:
-            print "outEdge " , oe.getAttributes().get("ID_NR")
-            
-        labels =  [Label(edge.getOutNode(parentLabel), 
-                         parent=parentLabel, 
-                         back_edge=edge) for edge in out_edges]
-        return labels
-        
             
     def findroutes(self, start_node, end_node):
+        self.num_labels = 0
+        self.result = []
         self.start_node = start_node
         self.end_node = end_node
         
-        self.startLabel = Label(self.start_node, parentLabel=None, parentEdge=None, endNode=self.end_node, routeFinder=self)
-        self.startLabel.expand(MAXIMUM_LENGTH, MINIMUM_LENGTH, endNode=self.end_node)
+        print "startnode " + str(self.start_node.getAttributes()) + " " + str(self.start_node.getPoint())
+        print "endnode " + str(self.end_node.getAttributes())
         
-        # print "startnode " + str(self.start_node.getAttributes()) + " " + str(self.start_node.getPoint())
-        # print "endnode " + str(self.end_node.getAttributes())
+        stack = [Label(self.start_node)]
         
-        #currentlabel = Label(self.start_node)
+        print "start node " + str(self.start_node.getAttributes())
         
-        #self.iterative_expansion(currentlabel)
-               
-        return self.results
+        while (len(stack) != 0):
+            
+            expandingLabel = stack.pop()
+            print "pop"
+            
+            expansion = self.expandLabel(expandingLabel)
+        
+            # shuffle(expansion)
+        
+#            if len(expansion)==1 and len(stack)>1:
+#                stack.pop()
+        
+            for currentLabel in expansion:
+        
+                if (self.isValidRoute(currentLabel)):
+                    self.result.append(currentLabel)
+                    
+                    if len(self.result) >= MAXIMUM_NUMBER_ROUTES:
+                        print "max number of routes exceeded"
+                        return self.result
+                
+                stack.append(currentLabel)
+                print "Label " + str(currentLabel.getAttributes()) + " added to stack."
+                
+        return self.result
                 
     def isValidRoute(self, label):
         #if not label.getNode() != self.end_node and label.getLength() >= MINIMUM_LENGTH and label.getLength() <= MAXIMUM_LENGTH:
