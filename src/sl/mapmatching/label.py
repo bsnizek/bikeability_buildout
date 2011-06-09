@@ -35,7 +35,7 @@ class Label:
         self.length = length
         # print "Label() at " + str(node.getAttributes().get("nodecounter"))
         # self.printRouteLabels()
-        # import pdb;pdb.set_trace()
+        
         
     def removeEdgeFromStar(self, edge):
         self.star.remove(edge)
@@ -49,8 +49,11 @@ class Label:
             
             2 if the label already in the upward list
             
-            4 if the length of the upward distance is > then the MAX LENGTH
-              defined in the route finder   
+            3 if the length of the upward distance is > then the MAX LENGTH
+              defined in the route finder
+              
+            4 if the euclidean distance exceeds the max length
+                 
         """
 
         if self.getNode().getAttributes().get("nodecounter") == self.endNode.getAttributes().get("nodecounter"):
@@ -59,6 +62,10 @@ class Label:
 
         if self.getLength() > self.routeFinder.getMaxLength():
             return 3
+        
+        if (self.routeFinder.getMaxLength() - self.getLength()) < self.routeFinder.euclideanOD[self.getNode()][self.endNode]:
+            return 4
+        
 
         if self.getOccurancesOfNode(self.getNode())>1:
             # node already in upwards label list 
@@ -67,56 +74,6 @@ class Label:
             # still on the way
             return 1
         
-        
-#    def expand(self, maxDist=0, minDist=0, endNode=None):
-#        """Expands the node
-#        """
-#        
-#        # print "Starting to expand ", self.getNode().getAttributes().get("nodecounter") 
-#        
-#        self.edges = self.getStar()
-# 
-#        while len(self.edges) > 0:
-#            # print "."
-#            edge = self.edges.pop()
-#            
-#            # print "instantiating to outnode ", edge.getOutNode(self).getAttributes().get("nodecounter")
-#            
-#            # import pdb;pdb.set_trace()
-#            if self.parentLabel:
-#                length = self.parentLabel.getLength() + edge.getLength()
-#            else:
-#                length = edge.getLength()
-#            
-#            currentLabel = Label(edge.getOutNode(self), 
-#                                 parentLabel = self, 
-#                                 parentEdge=edge, 
-#                                 endNode=self.endNode, 
-#                                 routeFinder=self.routeFinder, 
-#                                 length=length)
-#            
-#            check = currentLabel.checkValidity(edge.getOutNode(self), self)
-#            
-#            # print check
-#            
-#            if check == 0:
-#                print "route found" 
-#                self.routeFinder.results.append(self)
-#                # self.saveAsShapeFile('Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/x' + str(len(self.routeFinder.results)) + '.shp' )
-#                
-#            
-#            if check == 2:
-#                pass
-#            
-#            if check == 1:
-#                currentLabel.expand(maxDist=0, minDist=0, endNode=self.endNode)
-        
-        
-                
-
-       
-       
-       
             
     def getBackEdge(self):
         """Returns the edge that points backwards in the label hierarchy.

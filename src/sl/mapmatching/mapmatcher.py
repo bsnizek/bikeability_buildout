@@ -35,6 +35,11 @@ from shapely.geometry import Point
 
 INTERSECTION_MASK = 0.5
 
+# BASE_PATH = "/Users/hansskov-petersen/pymapmatching/src/sl/mapmatching/testdata/"
+BASE_PATH = "/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/"
+
+
+
 class Edge:
     """A nifte edge class for our graph.
     """
@@ -178,6 +183,7 @@ class MapMatcher():
         self.gps_points = [];
         self.edge_id__count = {}
         self.node_counter__node = {}
+        self.distance_matrix = {}
         
     def saveGraph(self, filename):
         """Saves the graph as a YAML file
@@ -319,7 +325,7 @@ class MapMatcher():
             flds = [x.GetName() for x in lyr.schema]
             self.G=self.addlyr(self.G, lyr, flds)
             
-        self.routefinder = RouteFinder(self.G)
+        self.routefinder = RouteFinder(self.G, euclideanOD=self.distance_matrix)
 
     def readGPS(self, inFile):
         """Parses a shapefile and build the GPS object
@@ -407,7 +413,7 @@ class MapMatcher():
         start_node = self.node_counter__node.get(start_node.getAttributes().get("nodecounter"))
         end_node = self.node_counter__node.get(end_node.getAttributes().get("nodecounter"))
         
-        self.routfinder = RouteFinder(self.G)
+        self.routfinder = RouteFinder(self.G, euclideanOD=self.distance_matrix)
         label_list = self.routefinder.findroutes(start_node, end_node)
 
         label_scores = []
@@ -540,18 +546,25 @@ if __name__ == '__main__':
 
     mm = MapMatcher()
     
-    mm.openShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/hspTest2.shp")
+    mm.openShape(BASE_PATH + "Sparse_bigger0.shp")
     
     print "Road network imported"
     
     print "Parsing road network -> graph"
-    mm.shapeToGraph("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/hspTest2Points.shp", uniqueId="NODE_ID")
+    mm.shapeToGraph(BASE_PATH + "Sparse_bigger0.shp", uniqueId="NODE_ID")
     print "Graph generated"
     
     nodes = mm.node_counter__node.values()
     
+    for n in nodes:
+        dict = {}
+        for m in nodes:
+            dict[m] = m.getGeometry().distance(n.getGeometry())
+        mm.distance_matrix[n] = dict
+            
+    
     # mm.dumpPointShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/points.shp")
-    mm.dumpPointShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/hspNodes.shp")
+    mm.dumpPointShape(BASE_PATH + "spNodes.shp")
     
     for node in nodes:
         edgeStr = ""
@@ -563,7 +576,7 @@ if __name__ == '__main__':
     #mm.saveGraph("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Network.yaml")
     #print "Graph saved"
     
-    mm.readGPS("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/GPS_Points.shp")
+    mm.readGPS(BASE_PATH + "GPS_Points.shp")
     
     # max_distance = mm.maxGPSDistance()
 
@@ -574,8 +587,8 @@ if __name__ == '__main__':
         mm.eliminiateEmptyEdges(distance = max_distance + 0.5)
     
         gts = GraphToShape(mm.G)
-        gts.dump("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Sparse_bigger0.shp",
-                 original_coverage = "/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Network.shp")    
+        gts.dump(BASE_PATH + "Sparse_bigger0.shp",
+                 original_coverage = BASE_PATH + "Network.shp")    
     
     mm.nearPoints()
     print "Near points executed"
@@ -587,13 +600,13 @@ if __name__ == '__main__':
     if selected_label:
 
         if (type(selected_label) == tuple):
-            selected_label[0].saveAsShapeFile("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SelectedRoute.shp")
+            selected_label[0].saveAsShapeFile(BASE_PATH + "SelectedRoute.shp")
             non_selected_counter = 0
             for non_selected in selected_label[1]:
-                non_selected.saveAsShapeFile("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Nonselected-" + non_selected_counter + ".shp")
+                non_selected.saveAsShapeFile(BASE_PATH + "Nonselected-" + non_selected_counter + ".shp")
                 non_selected_counter = non_selected_counter + 1 
         else:
-            selected_label.saveAsShapeFile("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SelectedRoute.shp")
+            selected_label.saveAsShapeFile(BASE_PATH + "SelectedRoute.shp")
     else:
         print "No route found"
         
