@@ -33,7 +33,7 @@ from rtree import Rtree
 import shapely.wkt
 from shapely.geometry import Point
 
-INTERSECTION_MASK = 0.5
+INTERSECTION_MASK = 1
 
 class Edge:
     """A nifte edge class for our graph.
@@ -157,9 +157,6 @@ class Node:
         """Returns the geometry (Shapely Point) of this node.
         """
         return self.geometry
-    
-    def getNodeID(self):
-        return self.getAttributes().get('nodecounter')
         
 
 
@@ -300,7 +297,79 @@ class MapMatcher():
                 
                 G.add_edge(pfrom, pto, edge=e, edgecounter=self.edgecounter)
                 
-                self.addEdgeToIndex(e)     
+                self.addEdgeToIndex(e)
+           
+            #if g.GetGeometryType() == 1: #point
+            #    G.add_node((g.GetPoint_2D(0)), attributes)
+            
+#            if g.GetGeometryType() == 2: #linestring
+#                last = g.GetPointCount() - 1
+#                
+#                p_from = g.GetPoint_2D(0)
+#                p_to = g.GetPoint_2D(last)
+#                
+#                if point_coords__nodes.get(p_from):
+#                
+#                    pfrom = point_coords__nodes.get(p_from)  
+#                    print "node " + str(pfrom.getAttributes().get("nodecounter")) + " edge " + str(attributes.get('ID_NR'))
+#                
+#                else:
+#                    
+#                    pfrom = Node(p_from, attributes={'from_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
+#                    self.nodecounter = self.nodecounter + 1 
+#                    point_coords__nodes[p_from] = pfrom
+#                
+#                if point_coords__nodes.get(p_to):
+#                
+#                    pto = point_coords__nodes.get(p_to)  
+#                    print "node " + str(pto.getAttributes().get("nodecounter")) + " edge " + str(attributes.get('ID_NR')) 
+#                
+#                else:
+#                
+#                    pto = Node(p_to, attributes={'to_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
+#                    self.nodecounter = self.nodecounter + 1 
+#                    point_coords__nodes[p_to] = pto
+#                
+#                shly_geom = shapely.wkt.loads(g.ExportToWkt())
+#                e = Edge(pfrom, pto, attributes, geometry = shly_geom)
+#                            
+#                G.add_edge(pfrom, pto, {"edge": e, "edgecounter" : self.edgecounter})
+#
+#                # we pull the nodes out of the graph again to index them
+#                edges_dict = nx.get_edge_attributes(G,"edgecounter")
+#                
+#                # import pdb;pdb.set_trace()
+#                
+#                edges_keys = edges_dict.keys()
+#                for k in edges_keys:
+#                    if self.edgecounter == edges_dict[k]:
+#                        self.node_counter__node[k[0].getAttributes()['nodecounter']] = k[0]
+#                        self.node_counter__node[k[1].getAttributes()['nodecounter']] = k[1]
+#                        self.addNodeToIndex(k[0])
+#                        self.addNodeToIndex(k[1])
+#                
+#                # let us throw the Edge into the index
+#                self.addEdgeToIndex(e)
+#                
+##                # add an edge in the other direction
+##                e2 = Edge(pto, pfrom, attributes, geometry = shly_geom)
+##                G.add_edge(pto, pfrom, {"edge": e2, "edgecounter" : self.edgecounter})
+##                
+##                edges_dict = nx.get_edge_attributes(G,"edgecounter")
+##                
+##                # import pdb;pdb.set_trace()
+##                
+##                edges_keys = edges_dict.keys()
+##                for k in edges_keys:
+##                    if self.edgecounter == edges_dict[k]:
+##                        self.node_counter__node[k[0].getAttributes()['nodecounter']] = k[0]
+##                        self.node_counter__node[k[1].getAttributes()['nodecounter']] = k[1]
+##                        self.addNodeToIndex(k[0])
+##                        self.addNodeToIndex(k[1])
+##                
+##                # let us throw the Edge into the index
+##                self.addEdgeToIndex(e2)
+                
                 
         return G
             
@@ -401,7 +470,7 @@ class MapMatcher():
         start_node =  self.getNearestNode(start_point)
         end_node =  self.getNearestNode(end_point)
         
-        # the start and endnodes returns by the index are not in the graph, 
+        # the start and endnodes returnes by the index are not in the graph, 
         # therefore we need to look them up ....
         
         start_node = self.node_counter__node.get(start_node.getAttributes().get("nodecounter"))
@@ -412,7 +481,7 @@ class MapMatcher():
 
         label_scores = []
         
-        # import pdb;pdb.set_trace()
+        
         
         # let us loop through the label list 
         for label in label_list:
@@ -478,61 +547,6 @@ class MapMatcher():
           
         print str(elimination_counter) + " edges eliminated."
         
-    def dumpPointShape(self, filename, original_coverage=None):
-        if filename:
-            driverName = "ESRI Shapefile"
-            drv = ogr.GetDriverByName( driverName )
-            
-            if drv:
-                drv.DeleteDataSource(filename)
-        
-            if drv is None:
-                print "%s driver not available.\n" % driverName    
-            ds = drv.CreateDataSource( filename)
-            
-            lyr = ds.CreateLayer( "blabla", None, ogr.wkbPoint )
-            if lyr is None:
-                print "Layer creation failed.\n"
-
-            field_defn = ogr.FieldDefn( "node_count", ogr.OFTInteger )
-            
-            if lyr.CreateField ( field_defn ) != 0:
-                print "Creating Name field failed.\n"
-                sys.exit( 1 )    
-                
-            field_defn = ogr.FieldDefn( "edge_list", ogr.OFTString )
-            field_defn.SetWidth( 1024)
-            
-            if lyr.CreateField ( field_defn ) != 0:
-                print "Creating Name field failed.\n"
-                sys.exit( 1 )
-            
-            for node in self.node_counter__node.values():
-                
-                
-                
-                feat = ogr.Feature( lyr.GetLayerDefn() )
-                
-                nc = node.getAttributes().get("nodecounter")
-                print nc
-                # import pdb;pdb.set_trace()
-                feat.SetField( "node_count", nc )  
-                s = ""
-                for edge in node.getOutEdges():
-                    s = s + str(int(edge.getAttributes().get("ID_NR"))) + ", "
-                     
-                feat.SetField( "edge_list", s )  
-                node_entity = ogr.Geometry(ogr.wkbPoint)
-#                wkb = edge.getGeometry().to_wkb()
-                node_entity.SetPoint_2D(0,node.getGeometry().x, node.getGeometry().y)
-                
-                feat.SetGeometry(node_entity)
-                
-                lyr.CreateFeature(feat)
-                feat.Destroy()
-                
-            print "Shapefile (%s) written." % filename
-        
 
 if __name__ == '__main__':
     
@@ -540,18 +554,15 @@ if __name__ == '__main__':
 
     mm = MapMatcher()
     
-    mm.openShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/hspTest2.shp")
+    mm.openShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SparseNetwork.shp")
     
     print "Road network imported"
     
     print "Parsing road network -> graph"
-    mm.shapeToGraph("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/hspTest2Points.shp", uniqueId="NODE_ID")
+    mm.shapeToGraph("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SparseNetwork.shp", uniqueId="ID_NR")
     print "Graph generated"
     
     nodes = mm.node_counter__node.values()
-    
-    # mm.dumpPointShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/points.shp")
-    mm.dumpPointShape("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/hspNodes.shp")
     
     for node in nodes:
         edgeStr = ""
@@ -574,7 +585,7 @@ if __name__ == '__main__':
         mm.eliminiateEmptyEdges(distance = max_distance + 0.5)
     
         gts = GraphToShape(mm.G)
-        gts.dump("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Sparse_bigger0.shp",
+        gts.dump("/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/SparseNetwork.shp",
                  original_coverage = "/Users/bsnizek/Projects/Mapmatching/pymapmatching/testdata/Network.shp")    
     
     mm.nearPoints()
