@@ -33,6 +33,8 @@ from rtree import Rtree
 import shapely.wkt
 from shapely.geometry import Point
 
+from route import Route 
+
 INTERSECTION_MASK = 0.5
 
 # BASE_PATH = "/Users/hansskov-petersen/pymapmatching/src/sl/mapmatching/testdata/"
@@ -128,7 +130,16 @@ class Edge:
             return self.getFromNode()
         else:
             return self.getToNode()
+
+    def getOutNode2(self, node):
+        to_counter = self.getToNode().getAttributes().get("nodecounter")
+        from_counter = self.getFromNode().getAttributes().get("nodecounter")
+        label_counter = node.getAttributes().get("nodecounter")
         
+        if label_counter == to_counter:
+            return self.getFromNode()
+        else:
+            return self.getToNode()        
         
 class Node:
     
@@ -142,6 +153,7 @@ class Node:
         """Returns the star of Edges from this node
         """
         edges = []
+        
         for edict in mm.G[self].values():
             for k in edict.keys():
                 edges.append(edict.get(k).get("edge"))
@@ -253,7 +265,7 @@ class MapMatcher():
                 
                 if len(results)==0:
                     
-                    print "New from-node " + str(self.nodecounter) + " for edge " + str(attributes.get("ID_NR")) + "."
+                    #print "New from-node " + str(self.nodecounter) + " for edge " + str(attributes.get("ID_NR")) + "."
                     
                     
                     pfrom = Node(p_from, attributes={'from_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
@@ -265,8 +277,8 @@ class MapMatcher():
                     # print p_from
                     self.nodecounter = self.nodecounter + 1
                 else:
-                    print len(results)
-                    print "From-node " + str(results[0]) + " recycled for edge " + str(attributes.get("ID_NR")) + "."
+                    #print len(results)
+                    #print "From-node " + str(results[0]) + " recycled for edge " + str(attributes.get("ID_NR")) + "."
                     
                     pfrom = self.node_counter__node[results[0]]
                     
@@ -282,7 +294,7 @@ class MapMatcher():
 
                 if len(results)==0:
                     
-                    print "New to-node " + str(self.nodecounter) + " for edge " + str(attributes.get("ID_NR")) + "."
+                    #print "New to-node " + str(self.nodecounter) + " for edge " + str(attributes.get("ID_NR")) + "."
                     
                     pto = Node(p_to, attributes={'to_edge':attributes.get(self.shapeFileUniqueId), "nodecounter":self.nodecounter})
                     self.node_counter__node[self.nodecounter] = pto
@@ -293,7 +305,7 @@ class MapMatcher():
                     self.nodecounter = self.nodecounter + 1
                 else:
                     
-                    print "To-node " + str(results[0]) +  " recycled for edge " + str(attributes.get("ID_NR")) + "."
+                    #print "To-node " + str(results[0]) +  " recycled for edge " + str(attributes.get("ID_NR")) + "."
                     
                     pto = self.node_counter__node[results[0]]
                     
@@ -317,6 +329,7 @@ class MapMatcher():
         # self.G = nx.readwrite.nx_shp.read_shp(inFile)
         
         self.G = nx.MultiGraph()
+        
         self.shapeFileUniqueId = uniqueId
         
         lyrcount = self.shapeFile.GetLayerCount() # multiple layers indicate a directory 
@@ -394,6 +407,91 @@ class MapMatcher():
         """
         nodes = list(mm.nodeidx.nearest((point.getPoint().x, point.getPoint().y)))
         return self.node_counter__node.get(nodes[0])
+    
+    def find_all_paths(self, graph, start, end, path=[]):
+        path = path + [start]
+        if start == end:
+            return [path]
+        if not graph.has_key(start):
+            return []
+        paths = []
+        for node in graph[start]:
+            if node not in path:
+                newpaths = self.find_all_paths(graph, node, end, path)
+                for newpath in newpaths:
+                    paths.append(newpath)
+        return paths 
+    
+    def findRoutes2(self):
+        
+        start_point = self.gps_points[0]
+        end_point = self.gps_points[-1]
+        
+        start_node =  self.getNearestNode(start_point)
+        end_node =  self.getNearestNode(end_point)
+        
+        graph = {}
+        print "preparing python graph"
+        
+        for node in  self.node_counter__node.values():
+            graph[node.getNodeID()] =  [n.getOutNode2(node).getNodeID() for n in node.getOutEdges()]
+        
+        import pprint
+        pprint.pprint( graph )
+        
+        print "From ", start_node.getNodeID(), " to ", end_node.getNodeID(), "."
+        results = self.find_all_paths(graph, start_node.getNodeID(), end_node.getNodeID())
+            
+        # let us find the edges
+        route_list = []    
+        for result in results:
+            i=1
+            edges = []
+            while i<len(result):
+                node_from = self.node_counter__node.get(result[i-1] )
+                node_to = self.node_counter__node.get(result[i] )
+                i = i +1
+                edge_dict = self.G[node_from][node_to]
+                if edge_dict.keys()>1:
+                    lngth = 9E99999
+                    
+                    for k in edge_dict.keys():
+                        
+                        if edge_dict[k]['edge'].getLength() < lngth:
+                            lngth = edge_dict[k]['edge'].getLength()
+                            edge = edge_dict[k]['edge']
+                else:
+                    edge = edge_dict[0]['edge']
+                
+                edges.append(edge)
+           
+            route_list.append(Route(edges))
+           
+        factor__selected_route = {}
+         
+        for route in route_list:
+            
+            number_of_points = 0
+            length = 0 
+            for edge in route.getEdges():
+                
+                # import pdb;pdb.set_trace()
+                
+                length = length + edge.getLength()
+                
+                edge_id = edge.getAttributes().get(self.shapeFileUniqueId)
+                
+                number_of_points = number_of_points + self.edge_id__count.get(edge_id, 0)
+                
+            if number_of_points > 1:
+                
+                factor__selected_route[number_of_points/length] = route
+                
+        keys = factor__selected_route.keys()
+        keys.sort()
+        
+        return factor__selected_route.get(keys[0])
+        
         
     def findRoute(self, returnNonSelection=False):
         """Finds a route from the node closest to the first GPS point to 
@@ -546,12 +644,12 @@ if __name__ == '__main__':
 
     mm = MapMatcher()
     
-    mm.openShape(BASE_PATH + "Sparse_bigger0.shp")
+    mm.openShape(BASE_PATH + "SparseNetwork.shp")
     
     print "Road network imported"
     
     print "Parsing road network -> graph"
-    mm.shapeToGraph(BASE_PATH + "Sparse_bigger0.shp", uniqueId="NODE_ID")
+    mm.shapeToGraph(BASE_PATH + "SparseNetwork.shp", uniqueId="NODE_ID")
     print "Graph generated"
     
     nodes = mm.node_counter__node.values()
@@ -593,20 +691,22 @@ if __name__ == '__main__':
     mm.nearPoints()
     print "Near points executed"
 
-    selected_label = mm.findRoute(returnNonSelection=False)
+    ##selected_label = mm.findRoute(returnNonSelection=False)
 
-    print selected_label
+    selected_route = mm.findRoutes2()
 
-    if selected_label:
+    print selected_route
 
-        if (type(selected_label) == tuple):
-            selected_label[0].saveAsShapeFile(BASE_PATH + "SelectedRoute.shp")
+    if selected_route:
+
+        if (type(selected_route) == tuple):
+            selected_route[0].saveAsShapeFile(BASE_PATH + "SelectedRoute.shp")
             non_selected_counter = 0
-            for non_selected in selected_label[1]:
+            for non_selected in selected_route[1]:
                 non_selected.saveAsShapeFile(BASE_PATH + "Nonselected-" + non_selected_counter + ".shp")
                 non_selected_counter = non_selected_counter + 1 
         else:
-            selected_label.saveAsShapeFile(BASE_PATH + "SelectedRoute.shp")
+            selected_route.saveAsShapeFile(BASE_PATH + "SelectedRoute.shp")
     else:
         print "No route found"
         
