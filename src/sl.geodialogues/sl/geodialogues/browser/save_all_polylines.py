@@ -63,7 +63,8 @@ class SaveAllPolylines(BrowserView):
             """The ORM class corresponding to the "point" table 
             """
             __tablename__ = 'point'
-            rspdid = Column(Integer, primary_key=True)
+            gid = Column(Integer, primary_key=True)
+            rspdid = Column(Integer)
             type = Column(String)
             t_nmbr = Column(Integer)
             text = Column(String)
@@ -80,7 +81,8 @@ class SaveAllPolylines(BrowserView):
             """The ORM class corresponding to the "poly" table 
             """
             __tablename__ = 'poly'
-            rspdid = Column(Integer, primary_key=True)
+            gid = Column(Integer, primary_key=True)
+            rspdid = Column(Integer) # , primary_key=True) # TODO back to 
             #length = Column(Numeric)                         # the number into this one (calculated by ...)
             #number_of_edges = Column(Integer)               # the number of edges (calculated by ...)
             #avg_edge_length = Column(Numeric)                # the average length of an edge (calculated by ...)
@@ -139,9 +141,10 @@ class SaveAllPolylines(BrowserView):
         
         # let's do the looping
         results = getToolByName(self.context, 'portal_catalog')(portal_type="Measurement")
-        
+        gid = 0
         for r in results:
-            
+            gid =  gid + 1
+            print "WRITIN ENTITY %s  --  %d" % (r.id, gid)
             obj = r.getObject()
             
             values = self.getValues(obj)
@@ -152,43 +155,45 @@ class SaveAllPolylines(BrowserView):
                 int(r.id )
             except:
                 cont = False
+            
             if cont:   
             
                 raw_polyline = self.data_dict.get("polyline",'')
                 pairs = raw_polyline.split(";")
-
+                    
+                line = ogr.Geometry(type=ogr.wkbLineString)
                 
-                if 1==1:
+                
+ 
                     
-                    line = ogr.Geometry(type=ogr.wkbLineString)
-                    
-                    
-                    for pair in pairs:
+                for pair in pairs:
+                
+                    coords = pair.split(",")
+                    if coords != ['']:
                         
-                        if len(pairs)>2:
+                        x = string.atof(coords[0])
+                        y = string.atof(coords[1])
                         
-                            coords = pair.split(",")
-                            if coords != ['']:
-                                
-                                x = string.atof(coords[0])
-                                y = string.atof(coords[1])
-                                
-                                line.AddPoint(y, x)
-                            
-                            line.AssignSpatialReference(inref)
-                            line.Transform(transform)
-                            
-                            self.session.add(self.PGPoly(rspdid= int(r.id ),
-                                                         no_points=False,
-                                                         the_geom = line.ExportToWkt()
-                                                         )
-                                             )
-                        else:
-                            self.session.add(self.PGPoly(rspdid= int(r.id ),
-                                                         no_points=True,
-                                                         )
-                                             )
-            
+                        line.AddPoint(y, x)
+                    
+                    line.AssignSpatialReference(inref)
+                    line.Transform(transform)
+                    line.SetCoordinateDimension(2)
+                    
+                if line.Length() == 0.0:
+                    self.session.add(self.PGPoly(gid=gid,
+                                                 rspdid= int(r.id ),
+                                                 no_points=True,
+                                                 )
+                                     )
+                else:
+                    self.session.add(self.PGPoly(gid=gid,
+                                                 rspdid= int(r.id ),
+                                                 no_points=False,
+                                                 the_geom = line.ExportToWkt()
+                                                 )
+                                     )
+       
                 self.session.commit()
             else:
                 print "fluffing out ..."
