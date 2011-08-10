@@ -1,0 +1,154 @@
+/*
+  This file is based on the ploneCustom.css.dtml file shipped with Plone.
+
+  <dtml-with base_properties> (do not remove this)
+  <dtml-call "REQUEST.set('portal_url', portal_url())"> (not this either)
+*/
+
+/* Stylesheet for the 'GeoDialogues' Plone theme */
+
+body {
+	font-family: 'Trebuchet MS', Tahoma, Verdana, Arial, sans-serif;
+}
+
+h2 {
+	font-size: 20px;
+}
+
+.google_spacer {
+	width : 300px;
+}
+
+#ajaxBusy {
+	padding-top : 7px;
+	padding-bottom : 3px;
+	display : none;
+	color : red;
+	background-color: white;
+}
+
+#ajaxBusy img {
+	float : left;
+	padding : 5px;
+}
+
+.gemmer {
+	float : left;
+	padding-top:10px;
+}
+
+#button-wrapper {
+	float:left;
+	width:30em;
+}
+
+#map {
+	float:left;
+	width:500px;
+	height:528px;
+}
+
+.deletemarker {
+	color : red;
+	font-size: 12px;
+}
+
+.hidebubble {
+	font-size: 12px;
+}
+
+.button-activate {
+	cursor:pointer;
+	margin-top : 0.5em;
+}
+
+.instruction {
+	color : #d3d3d3;
+	font-size: 0.9em;
+}
+
+#instruction1 a {
+	font-weight: bold;
+	cursor:pointer;
+}
+
+
+
+.b-wrapper {
+	cursor:pointer;
+	background-color:#d3d3d3;
+	padding:0.2em;
+}
+
+.b-wrapper:hover {
+	background-color: #ffc354;
+}
+
+#wrapper-1:hover {
+	background-color: #ffc354;
+}
+
+
+.button {
+	padding-left:10px;
+	/*float:left;*/
+	padding-bottom: 10px;
+	/*background-color: #808080;*/
+}
+
+.button-point {
+	float : left;
+	width : 33px;
+	height : 46px;
+	color : white;
+	padding-left:20px;
+	padding-top:10px;
+}
+
+.button-text {
+	color:white;
+	margin-top:5px;
+	height:24px;
+	font-size: 1.2em;
+}
+
+
+
+.okbutt {
+	float : left;
+}
+
+.box-button {
+	padding-top:10px;
+}
+
+.point {
+	float:left;
+}
+
+.addbox {
+    background-color: #808080;
+    height: 20px;
+    margin-left: 60px;
+    width: 220px;	
+}
+
+.addbox-label {
+	float:left;
+	width:100px;
+	padding-bottom : 3px;
+}
+
+.inserted-option-box {
+	/*float:left;*/
+	background-color: #808080;
+}
+
+.explanation { 
+ width : 280px;
+ margin:5px;
+}
+.explanation a {
+	font-weight: bold;
+}
+/* </dtml-with> */

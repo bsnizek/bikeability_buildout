@@ -1,0 +1,194 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+xml:lang="en" xmlns:tal="http://xml.zope.org/namespaces/tal"
+xmlns:metal="http://xml.zope.org/namespaces/metal"
+xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+lang="en"
+metal:use-macro="here/bikeability_main_template/macros/master"
+i18n:domain="sl.bikeability">
+
+	<head>
+		<metal:block metal:fill-slot="head_slot">
+			<!--<script src="http://maps.google.com/maps?file=api&amp;v=3&amp;key=ABQIAAAAdZy7KPNU5G-nLj85ppZWRRRPrglaROPTktcBxiTGweSIT8VhshRShbbhz13Zro0_5nF6BMYpBhkntg" type="text/javascript">
+		</script>-->
+		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+		</metal:block>
+	</head>
+	<body>
+		<metal:block fill-slot="top_slot" tal:define="dummy python:request.set('disable_border',1)" />
+		<metal:main fill-slot="main">
+			<tal:main-macro metal:define-macro="main"
+			tal:define="request request|here/request|container/request|nothing;">
+				<div tal:define="respondentid request/respondentid|view/respondentid">
+					<div id="headline">
+						<h2>
+							GODE OG D&Aring;RLIGE OPLEVELSER P&Aring; CYKELTUREN
+						</h2>
+						<div>
+							Hvis du vil starte forfra, tryk p&aring; browserens genopfrisk knap. 
+						</div>
+						
+						<div id="wheel"></div>
+					</div>
+					<div id="action-zone">
+						<div id="map-spacer">
+						</div>
+						
+						<div id="map">
+						</div>
+						<form name="mainform" id="mainform">
+						
+						<div id="button-wrapper">
+							<!-- button 1 starts here -->
+
+							<div id="button-1" class="button">
+								
+								<div id="wrapper-1" class="b-wrapper">
+									<div class="button-text" id="text1">
+										1. TEGN DIN RUTE
+									</div>
+								</div>
+								<!--<div id="ba1" class="button-activate">Klik her for at forts&aelig;tte med at tegne din rute</div>-->
+								<div class="instruction" id="instruction1">
+									Zoom ind s&aring; du kan se detaljer og tegn den seneste rute du har cyklet (fx p&aring; arbejde eller i skole).
+									Brug musen til at tegne din rute. Du kan redigere ruten ved at &#39;tr&aelig;kke&#39; i firkanterne langs ruten.
+									Du kan slette et punkt p&aring; ruten ved at klikke p&aring; det.  
+								</div>
+							</div>
+							
+							<!-- button 2 starts here -->
+							
+							<div id="button-2" class="button">
+																
+									<div id="wrapper-2" class="b-wrapper">
+										<div class="button-text" id="text2" i18n:translate="gode_oplevelser">
+											2. MARK&Eacute;R GODE OPLEVELSER
+										</div>
+									</div>
+									<!--<div id="ba2" class="button-activate">Klik her for at tilf&oslash;je steder med gode oplevelser</div>-->
+									
+									<div class="instruction" id="instruction2">
+										Mark&eacute;r op til 3 steder hvor du har havde en god oplevelse. Efter du har klikket p&aring; kortet vil vi bede dig om, 
+										at angive &aring;rsagen til din oplevelse. V&aelig;lg fra menuen og tilf&oslash;j evt. en uddybende kommentar.
+										Du kan flytte p&aring markeringerne ved at &#39;tr&aelig;kke&#39; dem rundt p&aring;, du kan til en hver tid rette i dine indtastinger 
+										eller slette en markering. Du kan skjule en tekstboks ved at klikke p&aring; krydset. 
+									</div>
+								
+
+							</div>
+														
+							<!-- button 2 ends here -->
+
+							<!-- button 3 starts here -->
+							
+							<div id="button-3" class="button">
+								
+								<div>
+								
+									<div id="wrapper-3" class="b-wrapper">
+										<div class="button-text" id="text3" i18n:translate="daarlige_oplevelser">
+											3. MARK&Eacute;R D&Aring;RLIGE OPLEVELSER
+										</div>
+									</div>
+									<!--<div id="ba3" class="button-activate">Klik her for at tilf&oslash;je steder med d&aring;rlige oplevelser</div>-->
+									<div class="instruction" id="instruction3">
+										Mark&eacute;r op til 3 steder hvor du har havde en d&aring;rlig oplevelse. Efter du har klikket p&aring; kortet vil vi bede dig om, 
+										at angive &aring;rsagen til din oplevelse. V&aelig;lg fra menuen og tilf&oslash;j evt. en uddybende kommentar. 
+										Du kan flytte p&aring markeringerne ved at &#39;tr&aelig;kke&#39; dem rundt p&aring;, du kan til en hver tid rette i dine indtastinger 
+										eller slette en markering. Du kan skjule en tekstboks ved at klikke p&aring; krydset.
+									</div>
+								</div>
+							</div>
+							<div id="button-4" class="button">
+								
+								<div>
+								
+									<div id="wrapper-4" class="b-wrapper">
+										<div class="button-text" id="text3" i18n:translate="daarlige_oplevelser">
+											4. GEM & AFSLUT
+											
+										</div>
+										<div id="ajaxBusy">
+												<img src="ajax_wheel.gif"> 
+												<div class="gemmer">... GEMMER ...</div>
+												<div style="clear:both;">
+											</div>
+										
+									</div>
+										
+								
+								<div style="clear:both;">
+								</div>
+							</div>
+	
+
+						<div style="clear:both;">
+
+						</div>
+					<input name="good-drop0" id="good-drop0" type="hidden"/>
+					<input name="good-text0" id="good-text0"  type="hidden"/>
+					<input name="good-coord0" id="good-coord0" type="hidden"/>
+					<br/>
+					<input name="good-drop1" id="good-drop1" type="hidden"/>
+					<input name="good-text1" id="good-text1" type="hidden"/>
+					<input name="good-coord1" id="good-coord1" type="hidden"/>
+					<br/>
+					<input name="good-drop2" id="good-drop2" type="hidden"/>
+					<input name="good-text2" id="good-text2" type="hidden"/>
+					<input name="good-coord2" id="good-coord2" type="hidden"/>
+					<br/>
+					<input name="bad-drop0" id="bad-drop0" type="hidden"/>
+					<input name="bad-text0" id="bad-text0" type="hidden"/>
+					<input name="bad-coord0" id="bad-coord0" type="hidden"/>
+					<br/>
+					<input name="bad-drop1" id="bad-drop1" type="hidden"/>
+					<input name="bad-text1" id="bad-text1" type="hidden"/>
+					<input name="bad-coord1" id="bad-coord1"  type="hidden"/>
+					<br/>
+					<input name="bad-drop2" id="bad-drop2"  type="hidden"/>
+					<input name="bad-text2" id="bad-text2" type="hidden"/>
+					<input name="bad-coord2" id="bad-coord2" type="hidden"/>
+					<br/>
+					<input name="polyline" id="polyline" type="hidden"/>
+					<input name="respondentid" id="respondentid" tal:attributes="value respondentid" type="hidden"/>
+
+					</form>
+					</div>
+					
+					
+					<script type="text/javascript">
+						$(document).ready( function() {
+						var g = google.maps;
+						
+						initMap('map');
+						initPolyline();
+						initializeButtons();
+						
+						/*initializeGoogleMap();
+						/
+						/initializeNoMarkerSetDlg();*/
+						
+						});
+					</script>
+					
+					<script type="text/javascript" tal:content="string:var PORTAL_URL='${here/portal_url}/';"></script>
+					
+					<div tal:omit-tag="" tal:condition="respondentid">
+						<script type="text/javascript" tal:content="string:var RESPONDENTID='${respondentid}';"></script>
+					</div>
+					
+					<div tal:omit-tag="" tal:condition="not:respondentid">
+						<script type="text/javascript" tal:content="string:var RESPONDENTID='NULL';"></script>
+					</div>
+					
+					<input name="polygon" id="polygon" type="hidden" />
+					<input name="good_markers" id="good_markers" type="hidden" />
+					<input name="bad_markers" id="bad_markers" type="hidden" />
+					
+					
+				</div>
+
+			</tal:main-macro>
+		</metal:main>
+	</body>
+</html>
+

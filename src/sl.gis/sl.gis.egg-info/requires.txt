@@ -1,0 +1,4 @@
+setuptools
+plone.app.jquerytools
+sqlalchemy
+geoalchemy
