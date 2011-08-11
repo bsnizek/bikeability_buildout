@@ -83,13 +83,19 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = 'poly'
             gid = Column(Integer, primary_key=True)
             rspdid = Column(Integer) # , primary_key=True) # TODO back to 
-            #length = Column(Numeric)                         # the number into this one (calculated by ...)
-            #number_of_edges = Column(Integer)               # the number of edges (calculated by ...)
-            #avg_edge_length = Column(Numeric)                # the average length of an edge (calculated by ...)
+            
+            # calculated fields
+            length = Column(Numeric)                         # the number into this one (calculated by ...)
+            number_of_edges = Column(Integer)               # the number of edges (calculated by ...)
+            average_edge_length = Column(Numeric)                # the average length of an edge (calculated by ...)
+            
             the_geom = GeometryColumn(Geometry(2), 
                                       comparator=PGComparator, 
                                       nullable=True)
+            
+            # calculated booleans and standard line measures
             no_points = Column(Boolean) 
+            is_ring = Column(Boolean)
                     
         class Person(object):
             """The ORM class corresponding to the line in the questionaire
@@ -163,12 +169,10 @@ class SaveAllPolylines(BrowserView):
                     
                 line = ogr.Geometry(type=ogr.wkbLineString)
                 
-                
- 
-                    
                 for pair in pairs:
                 
                     coords = pair.split(",")
+                    
                     if coords != ['']:
                         
                         x = string.atof(coords[0])
@@ -176,21 +180,27 @@ class SaveAllPolylines(BrowserView):
                         
                         line.AddPoint(y, x)
                     
-                    line.AssignSpatialReference(inref)
-                    line.Transform(transform)
-                    line.SetCoordinateDimension(2)
+                line.AssignSpatialReference(inref)
+                line.Transform(transform)
+                line.SetCoordinateDimension(2)
                     
                 if line.Length() == 0.0:
                     self.session.add(self.PGPoly(gid=gid,
                                                  rspdid= int(r.id ),
                                                  no_points=True,
+                                                 number_of_edges = len(pairs) -1
                                                  )
                                      )
                 else:
+                    import pdb;pdb.set_trace()
                     self.session.add(self.PGPoly(gid=gid,
                                                  rspdid= int(r.id ),
                                                  no_points=False,
-                                                 the_geom = line.ExportToWkt()
+                                                 the_geom = line.ExportToWkt(),
+                                                 length = line.Length(),
+                                                 number_of_edges = len(pairs) -1,
+                                                 average_edge_length = line.Length() / (len(pairs) -1),
+                                                 is_ring = line.IsRing()
                                                  )
                                      )
        
