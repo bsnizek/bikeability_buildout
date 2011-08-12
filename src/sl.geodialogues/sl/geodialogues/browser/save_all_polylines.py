@@ -61,33 +61,19 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = "person"
             
             rspdid = Column(Integer, primary_key=True)   
+            sex = Column(String)
             
-            def __init__(self, rspdid):
+            def __init__(self, rspdid, sex=None):
                 self.rspdid = rspdid
+                self.sex = sex
             
             
             
         person_table = Table('person', metadata,
-                              Column('rspid', Integer, primary_key=True)
+                              Column('rspdid', Integer, primary_key=True)
                               )                   
             
         mapper(Person, person_table)
-            
-    
-        class PGPoint(Base):
-            """The ORM class corresponding to the "point" table 
-            """
-            __tablename__ = 'point'
-            
-            gid = Column(Integer, Sequence('point_gid_sequence'), primary_key=True)
-            rspdid = Column(Integer, ForeignKey("person.rspid"))
-            type = Column(String)
-            t_nmbr = Column(Integer)
-            dropdown = Column(String)
-            text = Column(String)
-            the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=True)
-            polyline = ForeignKey('employees.employee_id'),
-            
         
         class PGPoly(Base):
             """The ORM class corresponding to the "poly" table 
@@ -95,7 +81,7 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = 'poly'
             
             gid = Column(Integer, Sequence('poly_gid_sequence'), primary_key=True)
-            rspdid = Column(Integer, ForeignKey("person.rspid"))
+            rspdid = Column(Integer, ForeignKey("person.c.rspdid"))
             
             # calculated fields
             length = Column(Numeric)                            # the number into this one (calculated by ...)
@@ -111,9 +97,27 @@ class SaveAllPolylines(BrowserView):
             no_points = Column(Boolean) 
             is_ring = Column(Boolean)
             only_one_edge = Column(Boolean)                     # true if the polyline consists of only one segment or edge
-                    
-
             
+    
+        class PGPoint(Base):
+            """The ORM class corresponding to the "point" table 
+            """
+            __tablename__ = 'point'
+            
+            gid = Column(Integer, Sequence('point_gid_sequence'), primary_key=True)
+            rspdid = Column(Integer, ForeignKey("person.rspid"))
+            type = Column(String)
+            t_nmbr = Column(Integer)
+            dropdown = Column(String)
+            text = Column(String)
+            the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=True)
+            polyline = ForeignKey('employees.employee_id')
+            
+            
+        GeometryDDL(Person.__table__)
+        GeometryDDL(PGPoly.__table__)
+        GeometryDDL(PGPoint.__table__)
+        
     
     def __call__(self):
         """
@@ -178,14 +182,14 @@ class SaveAllPolylines(BrowserView):
                     value_dict[field_labels[cntr_2]] = item
                     cntr_2 += 1
                 
-                rspid = value_dict["responde"]
+                rspdid = value_dict["responde"]
                 try:
                     rspid = int(rspid)
-#                    import pdb;pdb.set_trace()
-                    self.session.add(self.Person(rspid))
-                    print "record med rspdid=%d saved" % rspdid
+                    self.session.add(self.Person(rspdid))
+                    print rspdid
+#                    print "record med rspdid=%d saved" % rspdid
                 except:
-                    print "BUMMER"
+                    print "BUMMER : %s" % value_dict["responde"]
 
             cntr += 1
         
