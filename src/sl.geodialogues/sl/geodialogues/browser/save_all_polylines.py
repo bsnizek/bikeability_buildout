@@ -44,10 +44,8 @@ class SaveAllPolylines(BrowserView):
     """
     """
     
-    
-    
     template = ViewPageTemplateFile('templates/save_shp_file.pt')
-    
+    rspd_ids = []
     # lets build the ORM stuff
     if SAVE_INTO_POSTGRESQL:
         engine = create_engine(POSTGRESQL_CONNECTION_STRING, echo = ECHO)
@@ -55,23 +53,33 @@ class SaveAllPolylines(BrowserView):
         session = sessionmaker(bind=engine)()
         Base = declarative_base(metadata=metadata)
     
+        person_table = Table('person', metadata,
+                              Column('rspdid', Integer, primary_key=True),
+                              Column('sex', String),
+                              Column('last_biketour_duration', Numeric) # duration of the person's last biketour,
+                              
+                              )    
+    
         class Person(object):
             """The ORM class corresponding to the line in Suzanne's questionnaire data
             """
             __tablename__ = "person"
+           #  __table__ == self.person_table
             
             rspdid = Column(Integer, primary_key=True)   
             sex = Column(String)
+            last_biketour_duration = Column(Integer)
+            birth_year = Column(Integer)
             
-            def __init__(self, rspdid, sex=None):
+            def __init__(self, rspdid, 
+                         last_biketour_duration = None,
+                         sex  =None,
+                         birth_year = None):
+                
                 self.rspdid = rspdid
                 self.sex = sex
-            
-            
-            
-        person_table = Table('person', metadata,
-                              Column('rspdid', Integer, primary_key=True)
-                              )                   
+                self.last_biketour_duration = last_biketour_duration
+                self.birth_year = birth_year
             
         mapper(Person, person_table)
         
@@ -81,7 +89,7 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = 'poly'
             
             gid = Column(Integer, Sequence('poly_gid_sequence'), primary_key=True)
-            rspdid = Column(Integer, ForeignKey("person.c.rspdid"))
+            rspdid = Column(Integer, ForeignKey("person.rspdid"))
             
             # calculated fields
             length = Column(Numeric)                            # the number into this one (calculated by ...)
@@ -105,7 +113,7 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = 'point'
             
             gid = Column(Integer, Sequence('point_gid_sequence'), primary_key=True)
-            rspdid = Column(Integer, ForeignKey("person.rspid"))
+            rspdid = Column(Integer, ForeignKey("person.rspdid"))
             type = Column(String)
             t_nmbr = Column(Integer)
             dropdown = Column(String)
@@ -114,9 +122,9 @@ class SaveAllPolylines(BrowserView):
             polyline = ForeignKey('employees.employee_id')
             
             
-        GeometryDDL(Person.__table__)
-        GeometryDDL(PGPoly.__table__)
-        GeometryDDL(PGPoint.__table__)
+#        GeometryDDL(Person.__table__)
+#        GeometryDDL(PGPoly.__table__)
+#        GeometryDDL(PGPoint.__table__)
         
     
     def __call__(self):
@@ -183,10 +191,21 @@ class SaveAllPolylines(BrowserView):
                     cntr_2 += 1
                 
                 rspdid = value_dict["responde"]
+                last_biketour_duration = value_dict["s_12"]
+                sex = value_dict["s_38"]
+                birth_year = value_dict["s_39"]
+                income = value_dict["s_3"]
                 try:
                     rspid = int(rspid)
-                    self.session.add(self.Person(rspdid))
-                    print rspdid
+                    self.session.add(self.Person(
+                                                 rspdid,
+                                                 last_biketour_duration = last_biketour_duration,
+                                                 sex = sex,
+                                                 birth_year = birth_year,
+                                                 income = income
+                                                 )
+                                     )
+                    self.rspd_ids.append(rspdid)
 #                    print "record med rspdid=%d saved" % rspdid
                 except:
                     print "BUMMER : %s" % value_dict["responde"]
@@ -222,7 +241,7 @@ class SaveAllPolylines(BrowserView):
             except:
                 cont = False
             
-            if cont:   
+            if cont and int(r.id) in self.rspd_ids:   
             
                 raw_polyline = self.data_dict.get("polyline",'')
                 pairs = raw_polyline.split(";")
@@ -296,8 +315,8 @@ class SaveAllPolylines(BrowserView):
                                                  only_one_edge = only_one_edge
                                                  )
                                      )
-       
-                self.session.commit()
+                    # commit after each add
+                    self.session.commit()
             else:
                 print "fluffing out ..."
                 
@@ -331,17 +350,20 @@ class SaveAllPolylines(BrowserView):
                             wordle_text += " "
                             wordle_text += text
                             
-                            self.session.add(
-                                             self.PGPoint(
-                                                          rspdid= int(r.id ),
-                                                          the_geom = point.ExportToWkt(),
-                                                          type = type,
-                                                          t_nmbr = n,
-                                                          text = text,
-                                                          dropdown = drop,
-                                                        )
-                                             )
-            self.session.commit()
+                            if int(r.id ) in self.rspd_ids:
+                            
+                                self.session.add(
+                                                 self.PGPoint(
+                                                              rspdid= int(r.id ),
+                                                              the_geom = point.ExportToWkt(),
+                                                              type = type,
+                                                              t_nmbr = n,
+                                                              text = text,
+                                                              dropdown = drop,
+                                                            )
+                                                 )
+                                # commit after each add
+                                self.session.commit()
             
         print wordle_text
                         
