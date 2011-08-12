@@ -25,20 +25,20 @@ from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from config import *
+from geoalchemy import Table, GeometryColumn, Geometry, LineString, Point, GeometryDDL, GeometryExtensionColumn, GeometryCollection, DBSpatialElement, WKTSpatialElement, WKBSpatialElement
+from geoalchemy.postgis import PGComparator, pg_functions
 from osgeo import ogr,osr
 from plone.memoize.view import memoize
 from random import random
 from sqlalchemy import create_engine, MetaData, Column, Integer, Numeric, String, Boolean, Sequence, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, mapper
 from zope.app.component.hooks import getSite
+import csv
 import pprint
 import string
 import sys
 import transaction
-from sqlalchemy.ext.declarative import declarative_base
-from geoalchemy import Table, GeometryColumn, Geometry, LineString, Point, GeometryDDL, GeometryExtensionColumn, GeometryCollection, DBSpatialElement, WKTSpatialElement, WKBSpatialElement
-from geoalchemy.postgis import PGComparator, pg_functions
-import csv
 
 class SaveAllPolylines(BrowserView):
     """
@@ -53,25 +53,27 @@ class SaveAllPolylines(BrowserView):
         session = sessionmaker(bind=engine)()
         Base = declarative_base(metadata=metadata)
     
-        person_table = Table('person', metadata,
-                              Column('rspdid', Integer, primary_key=True),
-                              Column('sex', String),
-                              Column('last_biketour_duration', Numeric) # duration of the person's last biketour,
-                              
-                              )    
+#        person_table = Table('person', metadata,
+#                              Column('rspdid', Integer, primary_key=True),
+#                              Column('sex', String),
+#                              Column('last_biketour_duration', Numeric) # duration of the person's last biketour,
+#                              
+#                              )    
     
-        class Person(object):
+        class Person(Base):
             """The ORM class corresponding to the line in Suzanne's questionnaire data
             """
-            __tablename__ = "person"
-           #  __table__ == self.person_table
             
+            __tablename__ = "person"
+            __table_args__ = {'extend_existing':True}
             rspdid = Column(Integer, primary_key=True)   
             sex = Column(String)
-            last_biketour_duration = Column(Integer)
-            birth_year = Column(Integer)
+            last_biketour_duration = Column(String)
+            birth_year = Column(String)
+            income = Column(String)
             
             def __init__(self, rspdid, 
+                         income = None,
                          last_biketour_duration = None,
                          sex  =None,
                          birth_year = None):
@@ -80,8 +82,11 @@ class SaveAllPolylines(BrowserView):
                 self.sex = sex
                 self.last_biketour_duration = last_biketour_duration
                 self.birth_year = birth_year
+                
+            def __repr__(self):
+                print "<Person nummer %d" % rspdid
             
-        mapper(Person, person_table)
+#        mapper(Person, person_table)
         
         class PGPoly(Base):
             """The ORM class corresponding to the "poly" table 
@@ -121,10 +126,8 @@ class SaveAllPolylines(BrowserView):
             the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=True)
             polyline = ForeignKey('employees.employee_id')
             
-            
-#        GeometryDDL(Person.__table__)
-#        GeometryDDL(PGPoly.__table__)
-#        GeometryDDL(PGPoint.__table__)
+        GeometryDDL(PGPoly.__table__)
+        GeometryDDL(PGPoint.__table__)
         
     
     def __call__(self):
@@ -196,7 +199,8 @@ class SaveAllPolylines(BrowserView):
                 birth_year = value_dict["s_39"]
                 income = value_dict["s_3"]
                 try:
-                    rspid = int(rspid)
+#                    import pdb;pdb.set_trace()
+                    rspdid = int(rspdid)
                     self.session.add(self.Person(
                                                  rspdid,
                                                  last_biketour_duration = last_biketour_duration,
@@ -205,14 +209,19 @@ class SaveAllPolylines(BrowserView):
                                                  income = income
                                                  )
                                      )
+                    
                     self.rspd_ids.append(rspdid)
-#                    print "record med rspdid=%d saved" % rspdid
+                    try:
+                        self.session.commit()
+                    except:
+                        print "Unexpected error:", sys.exc_info()[0]
+                        import pdb;pdb.set_trace()
                 except:
                     print "BUMMER : %s" % value_dict["responde"]
 
             cntr += 1
         
-        self.session.commit()
+        
         print cntr, " objects loaded from CSV"
         
             
@@ -240,6 +249,8 @@ class SaveAllPolylines(BrowserView):
                 int(r.id )
             except:
                 cont = False
+            
+            import pdb;pdb.set_trace()
             
             if cont and int(r.id) in self.rspd_ids:   
             
