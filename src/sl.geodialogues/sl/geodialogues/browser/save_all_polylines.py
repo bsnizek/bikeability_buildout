@@ -28,7 +28,7 @@ from config import *
 from osgeo import ogr,osr
 from plone.memoize.view import memoize
 from random import random
-from sqlalchemy import create_engine, MetaData, Column, Integer, Numeric, String, Boolean, Sequence
+from sqlalchemy import create_engine, MetaData, Column, Integer, Numeric, String, Boolean, Sequence, ForeignKey
 from sqlalchemy.orm import sessionmaker, mapper
 from zope.app.component.hooks import getSite
 import pprint
@@ -38,10 +38,13 @@ import transaction
 from sqlalchemy.ext.declarative import declarative_base
 from geoalchemy import Table, GeometryColumn, Geometry, LineString, Point, GeometryDDL, GeometryExtensionColumn, GeometryCollection, DBSpatialElement, WKTSpatialElement, WKBSpatialElement
 from geoalchemy.postgis import PGComparator, pg_functions
+import csv
 
 class SaveAllPolylines(BrowserView):
     """
     """
+    
+    
     
     template = ViewPageTemplateFile('templates/save_shp_file.pt')
     
@@ -55,8 +58,20 @@ class SaveAllPolylines(BrowserView):
         class Person(object):
             """The ORM class corresponding to the line in Suzanne's questionnaire data
             """
-            __tablename__ = 'person'
-            rspd = Column(Integer, primary_key=True)                      
+            __tablename__ = "person"
+            
+            rspdid = Column(Integer, primary_key=True)   
+            
+            def __init__(self, rspdid):
+                self.rspdid = rspdid
+            
+            
+            
+        person_table = Table('person', metadata,
+                              Column('rspid', Integer, primary_key=True)
+                              )                   
+            
+        mapper(Person, person_table)
             
     
         class PGPoint(Base):
@@ -73,12 +88,6 @@ class SaveAllPolylines(BrowserView):
             the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=True)
             polyline = ForeignKey('employees.employee_id'),
             
-            
-#        mapper(PGPoint, point_table, properties= {
-#                                                  'the_geom' : GeometryColumn(point_table.c.the_geom, comparator=PGComparator)
-#                                                  
-#                                                  })
-        
         
         class PGPoly(Base):
             """The ORM class corresponding to the "poly" table 
@@ -115,6 +124,8 @@ class SaveAllPolylines(BrowserView):
         if SAVE_INTO_POSTGRESQL:
             if CREATE_TABLES:
                 self.createTables()
+                
+            self.loadQuestionnaireData()
             self.saveToPostresql()
         
         return self.template()
@@ -151,11 +162,37 @@ class SaveAllPolylines(BrowserView):
     def loadQuestionnaireData(self):
         """
         """
-        import csv
-        questionnaireReader = csv.reader(open('eggs.csv', 'rb'), delimiter=' ', quotechar='|')
-        for row in spamReader:
-            print ', '.join(row)
+
+        questionnaireReader = csv.reader(open('/Users/besn/git/bikeability_buildout/bikeability_buildout/data/csv/dataset.csv', 'rb'), delimiter=';', quotechar='"')
         
+        cntr = 0
+        
+        for row in questionnaireReader:
+            value_dict = {}
+            if cntr ==0:
+                # setup dict
+                field_labels = row
+            else:
+                cntr_2 = 0
+                for item in row:
+                    value_dict[field_labels[cntr_2]] = item
+                    cntr_2 += 1
+                
+                rspid = value_dict["responde"]
+                try:
+                    rspid = int(rspid)
+#                    import pdb;pdb.set_trace()
+                    self.session.add(self.Person(rspid))
+                    print "record med rspdid=%d saved" % rspdid
+                except:
+                    print "BUMMER"
+
+            cntr += 1
+        
+        self.session.commit()
+        print cntr, " objects loaded from CSV"
+        
+            
     def saveToPostresql(self):
         
         inref = self.getInRef()
