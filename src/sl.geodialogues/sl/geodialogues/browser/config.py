@@ -21,6 +21,7 @@ SAVE_AS_SHP = False
 
 ###### PostgreSQL setup
 
+ECHO = False
 CREATE_TABLES = True
 SAVE_INTO_POSTGRESQL = True
 POSTGRESQL_CONNECTION_STRING = "postgresql://postgres:post2011gres@localhost/bikeability"

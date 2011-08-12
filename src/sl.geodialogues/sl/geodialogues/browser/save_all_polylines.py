@@ -28,7 +28,7 @@ from config import *
 from osgeo import ogr,osr
 from plone.memoize.view import memoize
 from random import random
-from sqlalchemy import create_engine, MetaData, Column, Integer, Numeric, String, Boolean
+from sqlalchemy import create_engine, MetaData, Column, Integer, Numeric, String, Boolean, Sequence
 from sqlalchemy.orm import sessionmaker, mapper
 from zope.app.component.hooks import getSite
 import pprint
@@ -47,28 +47,31 @@ class SaveAllPolylines(BrowserView):
     
     # lets build the ORM stuff
     if SAVE_INTO_POSTGRESQL:
-        engine = create_engine(POSTGRESQL_CONNECTION_STRING, echo = True)
+        engine = create_engine(POSTGRESQL_CONNECTION_STRING, echo = ECHO)
         metadata = MetaData(engine)
         session = sessionmaker(bind=engine)()
         Base = declarative_base(metadata=metadata)
     
-#        point_table = Table('point', metadata,
-#                            Column( 'rspid', Integer, primary_key=True),
-#                            # ...
-#                            GeometryExtensionColumn('the_geometry', Geometry(2))
-#                            )
-
+        class Person(object):
+            """The ORM class corresponding to the line in Suzanne's questionnaire data
+            """
+            __tablename__ = 'person'
+            rspd = Column(Integer, primary_key=True)                      
+            
     
         class PGPoint(Base):
             """The ORM class corresponding to the "point" table 
             """
             __tablename__ = 'point'
-            gid = Column(Integer, primary_key=True)
-            rspdid = Column(Integer)
+            
+            gid = Column(Integer, Sequence('point_gid_sequence'), primary_key=True)
+            rspdid = Column(Integer, ForeignKey("person.rspid"))
             type = Column(String)
             t_nmbr = Column(Integer)
+            dropdown = Column(String)
             text = Column(String)
             the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=True)
+            polyline = ForeignKey('employees.employee_id'),
             
             
 #        mapper(PGPoint, point_table, properties= {
@@ -81,13 +84,15 @@ class SaveAllPolylines(BrowserView):
             """The ORM class corresponding to the "poly" table 
             """
             __tablename__ = 'poly'
-            gid = Column(Integer, primary_key=True)
-            rspdid = Column(Integer) # , primary_key=True) # TODO back to 
+            
+            gid = Column(Integer, Sequence('poly_gid_sequence'), primary_key=True)
+            rspdid = Column(Integer, ForeignKey("person.rspid"))
             
             # calculated fields
-            length = Column(Numeric)                         # the number into this one (calculated by ...)
-            number_of_edges = Column(Integer)               # the number of edges (calculated by ...)
-            average_edge_length = Column(Numeric)                # the average length of an edge (calculated by ...)
+            length = Column(Numeric)                            # the number into this one (calculated by ...)
+            number_of_edges = Column(Integer)                   # the number of edges (calculated by ...)
+            average_edge_length = Column(Numeric)               # the average length of an edge (calculated by ...)
+            number_of_edge_crosses = Column(Integer)            # the number of loops, i.e. the polyline crosses itself 
             
             the_geom = GeometryColumn(Geometry(2), 
                                       comparator=PGComparator, 
@@ -96,12 +101,9 @@ class SaveAllPolylines(BrowserView):
             # calculated booleans and standard line measures
             no_points = Column(Boolean) 
             is_ring = Column(Boolean)
+            only_one_edge = Column(Boolean)                     # true if the polyline consists of only one segment or edge
                     
-        class Person(object):
-            """The ORM class corresponding to the line in the questionaire
-            """
-            __tablename__ = 'person'
-            id = Column(Integer, primary_key=True)
+
             
     
     def __call__(self):
@@ -123,7 +125,13 @@ class SaveAllPolylines(BrowserView):
         super(BrowserView, self).__init__(context, request)
 
     def getValues(self, object):
-        return object.getMeasurement()        
+        return object.getMeasurement() 
+    
+    def getText(self, n=0, type="good"):
+        return self.data_dict.get("%s-text%d" % (type,n),"")   
+    
+    def getDrop(self, n=0, type="good"):    
+        return self.data_dict.get("%s-drop%d" % (type,n),"")    
  
     def createTables(self):
         self.metadata.drop_all()
@@ -140,7 +148,16 @@ class SaveAllPolylines(BrowserView):
         outref.ImportFromProj4("+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs") # ETRS_1989_UTM_Zone_32N
         return outref
         
+    def loadQuestionnaireData(self):
+        """
+        """
+        import csv
+        questionnaireReader = csv.reader(open('eggs.csv', 'rb'), delimiter=' ', quotechar='|')
+        for row in spamReader:
+            print ', '.join(row)
+        
     def saveToPostresql(self):
+        
         inref = self.getInRef()
         outref = self.getOutRef()
         transform = osr.CoordinateTransformation(inref, outref)
@@ -148,6 +165,8 @@ class SaveAllPolylines(BrowserView):
         # let's do the looping
         results = getToolByName(self.context, 'portal_catalog')(portal_type="Measurement")
         gid = 0
+        wordle_text = ""
+        
         for r in results:
             gid =  gid + 1
             print "WRITIN ENTITY %s  --  %d" % (r.id, gid)
@@ -169,6 +188,9 @@ class SaveAllPolylines(BrowserView):
                     
                 line = ogr.Geometry(type=ogr.wkbLineString)
                 
+                pair_counter = 0
+                edges = []
+                
                 for pair in pairs:
                 
                     coords = pair.split(",")
@@ -179,6 +201,23 @@ class SaveAllPolylines(BrowserView):
                         y = string.atof(coords[1])
                         
                         line.AddPoint(y, x)
+                        
+                        # let us build an edge and add it to edges for later processing
+                        if pair_counter > 1:
+                            
+                            edge = ogr.Geometry(type=ogr.wkbLineString)
+                            edge.AddPoint(y0, x0)
+                            edge.AddPoint(y, x)
+                            edge.AssignSpatialReference(inref)
+                            edge.Transform(transform)
+                            edge.SetCoordinateDimension(2)
+                            edges.append(edge)
+                        
+                        x0 = x
+                        y0 = y
+                        
+                        pair_counter +=1
+                          
                     
                 line.AssignSpatialReference(inref)
                 line.Transform(transform)
@@ -192,7 +231,18 @@ class SaveAllPolylines(BrowserView):
                                                  )
                                      )
                 else:
-                    import pdb;pdb.set_trace()
+#
+                    # calculate number_of_edge_crosses
+                    number_of_edge_crosses = 0
+                    for e in edges:
+                        for f in edges:
+                            if e.Crosses(f):
+                                number_of_edge_crosses +=1
+                                
+                    # build the polyline and add it to the session
+
+                    only_one_edge = pair_counter == 1
+
                     self.session.add(self.PGPoly(gid=gid,
                                                  rspdid= int(r.id ),
                                                  no_points=False,
@@ -200,91 +250,61 @@ class SaveAllPolylines(BrowserView):
                                                  length = line.Length(),
                                                  number_of_edges = len(pairs) -1,
                                                  average_edge_length = line.Length() / (len(pairs) -1),
-                                                 is_ring = line.IsRing()
+                                                 is_ring = line.IsRing(),
+                                                 number_of_edge_crosses = number_of_edge_crosses,
+                                                 only_one_edge = only_one_edge
                                                  )
                                      )
        
                 self.session.commit()
             else:
                 print "fluffing out ..."
-
- 
-    def writePolylineShapeFile(self):
-        
-        inref = self.getInRef()
-        outref = self.getOutRef()
-        
-        
-        transform = osr.CoordinateTransformation(inref, outref)
-        
-        
-        results = getToolByName(self.context, 'portal_catalog')(portal_type="Measurement")
-        
-        filename = "/Users/besn/Desktop/results/poly1.shp"
-    
-        driverName = "ESRI Shapefile"
-        drv = ogr.GetDriverByName( driverName )
-        drv.DeleteDataSource(filename)
-        
-        if drv is None:
-            print "%s driver not available.\n" % driverName    
-        ds = drv.CreateDataSource( filename)
-        
-        lyr = ds.CreateLayer( "polyline_out", outref, ogr.wkbLineString )
-        if lyr is None:
-            print "Layer creation failed.\n"
+                
+                
+            # and now to the points
+                
+            for type in ["good","bad"]:
+                for n in [0,1,2]:
+                    coords = self.getCoord(n=n, type=type)
+                    if coords !='':
+                        cont = True
+                        try:
+                            int(r.id )
+                        except:
+                            cont = False
+                                    
+                        if cont:            
+                            coords = coords.split(",")
+                            coords = [string.atof(x) for x in coords]
+                            x = coords[0]
+                            y = coords[1]
+                            point = ogr.Geometry(type=ogr.wkbPoint)
+                            point.AddPoint(y, x)
+                            point.AssignSpatialReference(inref)
+                            point.Transform(transform)
+                            point.SetCoordinateDimension(2)
+                            
+                            text = self.getText(n=n, type=type)
+                            drop = self.getDrop(n=n, type=type)
+                            
+                            wordle_text += " "
+                            wordle_text += text
+                            
+                            self.session.add(
+                                             self.PGPoint(
+                                                          rspdid= int(r.id ),
+                                                          the_geom = point.ExportToWkt(),
+                                                          type = type,
+                                                          t_nmbr = n,
+                                                          text = text,
+                                                          dropdown = drop,
+                                                        )
+                                             )
+            self.session.commit()
             
-        field_defn = ogr.FieldDefn( "rspid", ogr.OFTInteger )
-        if lyr.CreateField ( field_defn ) != 0:
-            print "Creating Name field failed.\n" 
-        
-        for r in results:
-            
-            obj = r.getObject()
-            
-            values = self.getValues(obj)
-            self.data_dict = eval(values)
-            
-            cont = True
-            try:
-                int(r.id )
-            except:
-                cont = False
-            if cont:   
-            
-                raw_polyline = self.data_dict.get("polyline",'')
-                
-                feat = ogr.Feature( feature_def=lyr.GetLayerDefn())
-                
-                coord_pairs = raw_polyline.split(";")
-                
-                coord_pairs = [f.split(",") for f in coord_pairs]
-                
-                line = ogr.Geometry(type=ogr.wkbLineString)
-                
-                feat.SetField( "rspid" , int(r.id ))
-                
-                for p in coord_pairs:
-                    
-                    try:
-                        x = string.atof(p[0])
-                        y = string.atof(p[1])
+        print wordle_text
                         
-                        line.AddPoint(y, x)
-                        print "point added"
-                    except:
-                        print "something went wrong"
-                
-                line.AssignSpatialReference(inref)
-                line.Transform(transform)
-                
-                feat.SetGeometryDirectly(line)
-                lyr.CreateFeature(feat)
-                feat.Destroy()
-               
-        
-  
-           
-            
 
-        
+
+    def getCoord(self, n=0, type="good"):
+        return self.data_dict.get("%s-coord%d" % (type,n),"")
