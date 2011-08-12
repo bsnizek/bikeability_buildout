@@ -250,8 +250,6 @@ class SaveAllPolylines(BrowserView):
             except:
                 cont = False
             
-            import pdb;pdb.set_trace()
-            
             if cont and int(r.id) in self.rspd_ids:   
             
                 raw_polyline = self.data_dict.get("polyline",'')
