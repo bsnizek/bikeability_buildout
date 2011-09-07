@@ -40,11 +40,29 @@ i18n:domain="sl.bikeability">
 						<div id="button-wrapper">
 							<!-- button 1 starts here -->
 
+							
+							<div id="button-0" class="button">
+								
+								<div id="wrapper-0" class="b-wrapper">
+									<div class="button-text" id="text0">
+										1. HVAD VAR TURENS VIGTIGSTE FORM&Aring;L ?
+										
+									</div>
+								</div>
+								<!--<div id="ba1" class="button-activate">Klik her for at forts&aelig;tte med at tegne din rute</div>-->
+								<div class="instruction" id="instruction0">
+									Vaelg en mulighed her:
+									<select id="purpose" name="purpose" onChange="javascript:saveData()">
+										<!-- jquery insert here -->
+									</select>
+								</div>
+							</div>
+							
 							<div id="button-1" class="button">
 								
 								<div id="wrapper-1" class="b-wrapper">
 									<div class="button-text" id="text1">
-										1. TEGN DIN RUTE
+										2. TEGN DIN RUTE
 									</div>
 								</div>
 								<!--<div id="ba1" class="button-activate">Klik her for at forts&aelig;tte med at tegne din rute</div>-->
@@ -61,7 +79,7 @@ i18n:domain="sl.bikeability">
 																
 									<div id="wrapper-2" class="b-wrapper">
 										<div class="button-text" id="text2" i18n:translate="gode_oplevelser">
-											2. MARK&Eacute;R GODE OPLEVELSER
+											3. MARK&Eacute;R GODE OPLEVELSER
 										</div>
 									</div>
 									<!--<div id="ba2" class="button-activate">Klik her for at tilf&oslash;je steder med gode oplevelser</div>-->
@@ -86,7 +104,7 @@ i18n:domain="sl.bikeability">
 								
 									<div id="wrapper-3" class="b-wrapper">
 										<div class="button-text" id="text3" i18n:translate="daarlige_oplevelser">
-											3. MARK&Eacute;R D&Aring;RLIGE OPLEVELSER
+											4. MARK&Eacute;R D&Aring;RLIGE OPLEVELSER
 										</div>
 									</div>
 									<!--<div id="ba3" class="button-activate">Klik her for at tilf&oslash;je steder med d&aring;rlige oplevelser</div>-->
@@ -104,7 +122,7 @@ i18n:domain="sl.bikeability">
 								
 									<div id="wrapper-4" class="b-wrapper">
 										<div class="button-text" id="text3" i18n:translate="daarlige_oplevelser">
-											4. GEM & AFSLUT
+											5. GEM & AFSLUT
 											
 										</div>
 										<div id="ajaxBusy">

@@ -52,14 +52,7 @@ class SaveAllPolylines(BrowserView):
         metadata = MetaData(engine)
         session = sessionmaker(bind=engine)()
         Base = declarative_base(metadata=metadata)
-    
-#        person_table = Table('person', metadata,
-#                              Column('rspdid', Integer, primary_key=True),
-#                              Column('sex', String),
-#                              Column('last_biketour_duration', Numeric) # duration of the person's last biketour,
-#                              
-#                              )    
-    
+           
         class Person(Base):
             """The ORM class corresponding to the line in Suzanne's questionnaire data
             """
@@ -94,7 +87,7 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = 'poly'
             
             gid = Column(Integer, Sequence('poly_gid_sequence'), primary_key=True)
-            rspdid = Column(Integer, ForeignKey("person.rspdid"))
+            
             
             # calculated fields
             length = Column(Numeric)                            # the number into this one (calculated by ...)
@@ -110,7 +103,21 @@ class SaveAllPolylines(BrowserView):
             no_points = Column(Boolean) 
             is_ring = Column(Boolean)
             only_one_edge = Column(Boolean)                     # true if the polyline consists of only one segment or edge
+            invalid = Column(Boolean)
             
+            # and the foreign key
+            if LOADQUESTIONNAIREDATA:
+                rspdid = Column(Integer, ForeignKey("person.rspdid"))
+            else:
+                rspdid = Column(Integer)
+            
+#        class PointClass(object):
+#            """The dropdown class, TODO : implement
+#            """
+#            __tablename__ = "point_class"
+#            id = Column(String, primary_key=True)
+#            text = Column(String)
+    
     
         class PGPoint(Base):
             """The ORM class corresponding to the "point" table 
@@ -118,13 +125,29 @@ class SaveAllPolylines(BrowserView):
             __tablename__ = 'point'
             
             gid = Column(Integer, Sequence('point_gid_sequence'), primary_key=True)
-            rspdid = Column(Integer, ForeignKey("person.rspdid"))
+            if LOADQUESTIONNAIREDATA:
+                rspdid = Column(Integer, ForeignKey("person.rspdid"))
+            else:
+                rspdid = Column(Integer)
             type = Column(String)
             t_nmbr = Column(Integer)
             dropdown = Column(String)
             text = Column(String)
             the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=True)
-            polyline = ForeignKey('employees.employee_id')
+            distance = Column(Numeric)   # minimum distance to the polyline with the same rspdid
+            wrong_assignment = Column(Integer)
+            
+#        class PGPointKernel(Base):
+#            """A kernel class wich describes the center of a group of points which are of the same class
+#            """
+#            __table__ = "point_kernel"
+#            gid = Column(Integer, Sequence('point_kernel_gid_sequence'), primary_key=True)
+#            the_geom = GeometryColumn(Geometry(2), comparator=PGComparator, nullable=False)
+#            
+#        class RelKernelPoint(object):
+#            pg_point = Column(Integer, ForeignKey("point.rspdid"))
+#            
+            
             
         GeometryDDL(PGPoly.__table__)
         GeometryDDL(PGPoint.__table__)
@@ -139,8 +162,8 @@ class SaveAllPolylines(BrowserView):
         if SAVE_INTO_POSTGRESQL:
             if CREATE_TABLES:
                 self.createTables()
-                
-            self.loadQuestionnaireData()
+            if LOADQUESTIONNAIREDATA == True:    
+                self.loadQuestionnaireData()
             self.saveToPostresql()
         
         return self.template()
@@ -238,7 +261,7 @@ class SaveAllPolylines(BrowserView):
         
         for r in results:
             gid =  gid + 1
-            print "WRITIN ENTITY %s  --  %d" % (r.id, gid)
+            print "WRITING ENTITY %s  --  %d" % (r.id, gid)
             obj = r.getObject()
             
             values = self.getValues(obj)
@@ -249,8 +272,13 @@ class SaveAllPolylines(BrowserView):
                 int(r.id )
             except:
                 cont = False
+                
+            if LOADQUESTIONNAIREDATA:
+                clause = int(r.id) in self.rspd_ids
+            else:
+                clause = True
             
-            if cont and int(r.id) in self.rspd_ids:   
+            if cont and clause:   
             
                 raw_polyline = self.data_dict.get("polyline",'')
                 pairs = raw_polyline.split(";")
@@ -331,6 +359,8 @@ class SaveAllPolylines(BrowserView):
                 
                 
             # and now to the points
+              
+            
                 
             for type in ["good","bad"]:
                 for n in [0,1,2]:
@@ -342,7 +372,8 @@ class SaveAllPolylines(BrowserView):
                         except:
                             cont = False
                                     
-                        if cont:            
+                        if cont:       
+                                 
                             coords = coords.split(",")
                             coords = [string.atof(x) for x in coords]
                             x = coords[0]
@@ -359,8 +390,28 @@ class SaveAllPolylines(BrowserView):
                             wordle_text += " "
                             wordle_text += text
                             
-                            if int(r.id ) in self.rspd_ids:
+                            if LOADQUESTIONNAIREDATA:
+                                clause = int(r.id ) in self.rspd_ids
+                            else:
+                                clause = True
                             
+                            
+                            
+                            
+                            
+                            if clause:
+                                
+                                wrong_assignment = 0
+                                
+                                if type == "bad":
+#                                    import pdb;pdb.set_trace()
+                                    if drop in ['god_sti_bel','god_cykel_park','smuk_groen_omgiv','god_fremk','ned_bakke', 'god_udsigt','mulighed_koere_staerkt','andre_cyklister','andre_cyklister_smiler',]:
+                                        wrong_assignment = 1
+                                else:        
+                                    if drop in ['farligt_kryds','larm_forurening','vejarbejde','fordg_pa_cykelsti','biler_taet_paa','manglende_cykelpark','daarlig_beleagn','biler_parkeret','op_ad_bakke','andre_cyk','andre_cyk_raaber','for_mange_andre']:
+                                        wrong_assignment = 1
+                                
+                                
                                 self.session.add(
                                                  self.PGPoint(
                                                               rspdid= int(r.id ),
@@ -369,12 +420,38 @@ class SaveAllPolylines(BrowserView):
                                                               t_nmbr = n,
                                                               text = text,
                                                               dropdown = drop,
+                                                              wrong_assignment = wrong_assignment
                                                             )
                                                  )
                                 # commit after each add
                                 self.session.commit()
             
         print wordle_text
+        
+        # calc distance
+        dist_cntr = 0
+        for point in self.session.query(self.PGPoint).order_by(self.PGPoint.rspdid):
+            point_geom = point.the_geom
+            polies = self.session.query(self.PGPoly).filter_by(rspdid=point.rspdid).all()
+            if len(polies) == 1:
+                poly = polies[0]
+                if poly.the_geom:
+                    poly_geometry = ogr.CreateGeometryFromWkt(self.session.scalar(poly.the_geom.wkt))
+                    point_geometry = ogr.CreateGeometryFromWkt(self.session.scalar(point.the_geom.wkt))                
+                    distance = poly_geometry.Distance(point_geometry)
+                    point.distance = distance
+                                        
+                    print "Distance %d added" % dist_cntr
+                    dist_cntr+=1
+                    
+                    self.session.commit()
+            else:
+                print "more than one poly"
+            
+        
+                        
+        # do some kernels
+        
                         
 
 

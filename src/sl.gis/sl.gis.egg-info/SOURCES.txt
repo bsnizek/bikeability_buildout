@@ -21,6 +21,8 @@ sl/gis/setuphandlers.py
 sl/gis/skins.zcml
 sl/gis/tests.py
 sl/gis/version.txt
+sl/gis/orm/__init__.py
+sl/gis/orm/orm.py
 sl/gis/profiles/default/cssregistry.xml
 sl/gis/profiles/default/import_steps.xml
 sl/gis/profiles/default/jsregistry.xml

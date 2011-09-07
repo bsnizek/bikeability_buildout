@@ -6,12 +6,24 @@ var tmpPolyLine;
 var markers = [];
 var vmarkers = [];
 
-var STATE = 1;
+var STATE = 0;
 
 var polyLineListener = null;
 var polyLineListenerMarker = null;
 
+var LOCK_POINTS_TO_ROUTE = true;
 
+// 
+var PURPOSE_VALUES = [['0','V&aelig;lg'],
+                      ['arbejde','Arbejde'],
+                      ['skole','Skole'],
+                      ['indkoeb','Indkoeb'],
+                      ['fritid','Fritid']]
+
+// Do you want to show the good and the bad groups ? 
+var SHOW_GROUPS = false;
+
+// add some values for the good points
 var GOOD_GROUP_VALUES = [['0','V&aelig;lg'],
 						 ['god_sti_bel','God cykelsti/bel&aelig;gning'],
 						 ['god_cykel_park','God cykelparkering'],
@@ -25,7 +37,7 @@ var GOOD_GROUP_VALUES = [['0','V&aelig;lg'],
 						 ['andet','Andet']
 						 ];
 						 
-
+// add some values for the bad points
 var BAD_GROUP_VALUES = [['0','V&aelig;lg'],
 					    ['farligt_kryds','Farligt kryds'],
 					    ['larm_forurening','Larm/forurening'],
@@ -106,19 +118,20 @@ function polyClick(event) {
 }
 
 function mapLeftClick(event) {
-	if (event.latLng) {
-		var marker = createMarker(event.latLng);
-		markers.push(marker);
-		if (markers.length != 1) {
-			var vmarker = createVMarker(event.latLng);
-			vmarkers.push(vmarker);
-			vmarker = null;
+	
+		if (event.latLng) {
+			var marker = createMarker(event.latLng);
+			markers.push(marker);
+			if (markers.length != 1) {
+				var vmarker = createVMarker(event.latLng);
+				vmarkers.push(vmarker);
+				vmarker = null;
+			}
+			var path = polyLine.getPath();
+			path.push(event.latLng);
+			marker = null;
+			updatePolyLineField();
 		}
-		var path = polyLine.getPath();
-		path.push(event.latLng);
-		marker = null;
-		updatePolyLineField();
-	}
 	event = null;
 };
 
@@ -203,6 +216,7 @@ function createMarker(point) {
 		}
 		m = null;
 	});
+	
 	var marker_listener = google.maps.event.addListener(marker, "click", function() {
 		for (var m = 0; m < markers.length; m++) {
 			if (markers[m] == marker) {
@@ -489,10 +503,17 @@ function initializeButtons() {
 
 	// jq("button").button({ icons: {primary:'ui-icon-circle-check'},text: false });
 
+	jq("#button-0").bind("click", function() {
+		jq("#button-0").unbind();
+		activateZero();
+	});
+	
+	
 	jq("#button-1").bind("click", function() {
 		jq("#button-1").unbind();
 		activateOne();
 	});
+	
 	jq("#button-2").bind("click", function() {
 		jq("#button-2").unbind();
 		activateTwo();
@@ -503,7 +524,7 @@ function initializeButtons() {
 		activateThree();
 	});
 	
-	activateOne();
+	activateZero();
 	
 	
 	jq("#button-4").bind("click", function() {
@@ -512,16 +533,85 @@ function initializeButtons() {
 		alert("Tak for oplysningerne om dine oplevelser. Din rute samt alle oplevelser er gemt, og du kan nu lukke vinduet og gå tilbage for at afslutte spørgeskemaet.");
 	});
 	
-	
+	jq("instruction1").hide();
 	jq("instruction2").hide();
 	jq("instruction3").hide();
 	jq("ba1").hide();
 	
 	jq("#instruction4").css("color", "grey");
+	
+	// 	
+	// alert("" + PURPOSE_VALUES);
+	var purposes = PURPOSE_VALUES;
+	// alert(purposes);
+	for (var p=0; p<purposes.length;p++) {
+		jq("#purpose").append('<option value="' + purposes[p][0] + '">' + purposes[p][1] + '</option>');
+
+	}
+	
 
 }
 
+function activateZero() {
+
+	if (STATE==1) {
+		deactivateOne();
+	}
+	
+	if (STATE==2) {
+		deactivateTwo();
+	}
+
+	if (STATE==3) {
+		deactivateThree();
+	}
+	if (STATE==4) {
+		nextState=1;
+		deactivateFour();
+	}
+	
+	STATE=0;
+	
+	jq("#wrapper-0").css("background-color","#FF0000");
+	jq("#button-0").unbind();
+	
+	jq("#ba0").hide();
+
+	jq("instruction0").show();
+
+	jq("#instruction0").css("color","black");
+	
+}
+
+function deactivateZero() {
+	
+	
+
+	jq("#wrapper-0").css("background-color","#d3d3d3");
+	jq("#b0").css("background-image",'url(dot-grey.png)');
+
+	jq("#button-0").bind("click", function() {
+		jq("#button-0").unbind();
+		activateOne();
+	});
+	jq("#instruction0").css("color","#d3d3d3");
+	
+	$("#wrapper-0").hover( function(){
+     	$(this).css('background-color', '#ffc354');
+	}, 
+	function(){
+     	$(this).css('background-color', '#d3d3d3');
+	});
+	
+	jq("#ba0").show();
+}
+
+
 function activateOne() {
+
+	if (STATE==0) {
+		deactivateZero();
+	}
 	
 	if (STATE==2) {
 		deactivateTwo();
@@ -583,6 +673,9 @@ function deactivateOne() {
 
 function activateTwo() {
 	
+	if (STATE==0) {
+		deactivateZero();
+	}
 	
 	if (STATE==1) {
 		nextState = 2;
@@ -658,6 +751,10 @@ function deactivateTwo() {
 
 function activateThree() {
 	
+	if (STATE==0) {
+		deactivateZero();
+	}
+	
 	if (STATE==2) {
 		nextState=3;
 		deactivateTwo();
@@ -722,6 +819,10 @@ function deactivateThree() {
 
 function activateFour() {
 	
+	if (STATE==0) {
+		deactivateZero();
+	}
+	
 	if (STATE==2) {
 		nextState=3;
 		deactivateTwo();
@@ -766,9 +867,11 @@ function deactivateFour() {
  */
 
 function placeGoodMarkers() {
-	GOOD_listener = google.maps.event.addListener(map, 'click', function(event) {
-		placeGoodMarker(event.latLng);
-	});
+	if (LOCK_POINTS_TO_ROUTE == false) {
+		GOOD_listener = google.maps.event.addListener(map, 'click', function(event) {
+			placeGoodMarker(event.latLng);
+		});
+	}
 }
 
 /*
@@ -778,9 +881,11 @@ function placeGoodMarkers() {
  */
 
 function placeBadMarkers() {
-	BAD_listener = google.maps.event.addListener(map, 'click', function(event) {
-		placeBadMarker(event.latLng);
-	});
+	if (LOCK_POINTS_TO_ROUTE == false) {
+		BAD_listener = google.maps.event.addListener(map, 'click', function(event) {
+			placeBadMarker(event.latLng);
+		});
+	}
 }
 
 function createDropdown(id, type_) {
@@ -1027,7 +1132,7 @@ function saveData() {
 		context: document.body,
 		success: function() {
 			jq("#wheel").css("background-image",'');
-			// alert("saved");
+			// alert(serialized);
 		}
 	});
 }
@@ -1041,7 +1146,10 @@ function redrawRoute() {
 
 function initMeasurementView() {
 	
+	
 	var goods = DATA['good_markers'];
+	
+	alert(goods);
 	
 	for (var g=0; g<goods.length; g++) {
 		var marker = new google.maps.Marker({
