@@ -57,7 +57,7 @@
 		class=".bikeability_dialogue.BikeabilityDialogue1Save"
 		layer=".interfaces.IThemeSpecific"
 		/>     
-		
+	<!--	
     <browser:page
 		for="*"
 		name="save_all_points"
@@ -73,5 +73,5 @@
 		class=".save_all_polylines.SaveAllPolylines"
 		layer=".interfaces.IThemeSpecific"
 		/>  
-
+	-->
 </configure>
