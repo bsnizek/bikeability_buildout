@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #*
 *$
 *.BAK
@@ -35,3 +36,6 @@ develop-eggs
 eggs
 src/__sl.geoservices
 src/sl.geodialogues.tar.gz
+=======
+/build
+>>>>>>> cc945027fa5fd72a31b6117d61ec64397c8c981e

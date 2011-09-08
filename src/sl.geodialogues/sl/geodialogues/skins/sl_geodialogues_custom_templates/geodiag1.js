@@ -15,16 +15,36 @@ var LOCK_POINTS_TO_ROUTE = true;
 
 // 
 var PURPOSE_VALUES = [['0','V&aelig;lg'],
-                      ['arbejde','Arbejde'],
-                      ['skole','Skole'],
-                      ['indkoeb','Indkoeb'],
-                      ['fritid','Fritid']]
+                      ['transport','Transport (f.eks. til/fra arbejde/skole)'],
+                      ['motion','Motion (f.eks. landevejscykling/mountainbike)'],
+                      ['selveturen','Selve turen (f.eks. oplevelser/samv&aelig;r)']
+					 ];
 
 // Do you want to show the good and the bad groups ? 
-var SHOW_GROUPS = false;
+var SHOW_GROUPS = true;
 
 // add some values for the good points
+
 var GOOD_GROUP_VALUES = [['0','V&aelig;lg'],
+                         ['fred_og_ro','Fred og ro'],
+                         ['endomhed_komme_vaek','Ensomhed/komme v&aelig;k'],
+                         ['natur_og_groenne_omgivelser','Natur og gr&oslash;nne omgivelser'],
+                         ['dyreliv','Dyreliv'],
+                         ['god_udsigt_vand','God udsigt (vand)'],
+                         ['god_udsigt_land','God udsigt (land)'],
+                         ['kulturhistorie_bygninger','Kulturhistorie (bygninger)'],
+                         ['bystemning','Bystemning'],
+                         ['god_stibelaegning','God stibel&aelig;gning'],
+                         ['god_fremkommelighed','God fremkommelighed'],
+                         ['ned_ad_bakke','Ned ad bakke'],
+                         ['koere_staerkt','K&oslash;re st&aelig;rkt'],
+                         ['andre_cyklister','Andre cyklister'],
+                         ['et_sted_med_personlige_minder','Et sted med personlige minder'],
+                         ['andet','Andet'],
+                         ];
+
+
+var GOOD_GROUP_VALUES_v0_1 = [['0','V&aelig;lg'],
 						 ['god_sti_bel','God cykelsti/bel&aelig;gning'],
 						 ['god_cykel_park','God cykelparkering'],
 						 ['smuk_groen_omgiv','Smukke, gr&oslash;nne omgivelser'],
@@ -36,9 +56,25 @@ var GOOD_GROUP_VALUES = [['0','V&aelig;lg'],
 						 ['andre_cyklister_smiler','Andre cyklister, der smiler'],
 						 ['andet','Andet']
 						 ];
-						 
-// add some values for the bad points
+
 var BAD_GROUP_VALUES = [['0','V&aelig;lg'],
+                        ['farligt_kryds','Farligt kryds'],
+                        ['larm_stoej','Larm/st&oslash;j'],
+                        ['luftforurening','Luftforurening'],
+                        ['vejarbejde','Vejarbejde'],
+                        ['daarlig_belaegning','D&aring;rlig bel&aelig;gning'],
+                        ['ingen_cykelsti','Ingen cykelsti'],
+						['biler_taet_paa','Biler t&aelig;t p&aring;'],
+						['fodgaengere_paa_cykelsti','Fodg&aelig;ngere p&aring; cykelsti'],
+						['andre_cyklister','Andre cyklister'],
+						['for_mange_andre_cyklister','For mange andre cyklister'],
+						['op_ad_bakke','Op ad bakke'],
+						['modvind','Modvind'],
+						['andet','Andet']
+					    ];
+
+// add some values for the bad points
+var BAD_GROUP_VALUES_v0_1 = [['0','V&aelig;lg'],
 					    ['farligt_kryds','Farligt kryds'],
 					    ['larm_forurening','Larm/forurening'],
 					    ['vejarbejde','Vejarbejde'],

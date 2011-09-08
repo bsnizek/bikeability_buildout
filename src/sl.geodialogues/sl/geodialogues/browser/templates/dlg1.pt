@@ -44,14 +44,14 @@ i18n:domain="sl.bikeability">
 							<div id="button-0" class="button">
 								
 								<div id="wrapper-0" class="b-wrapper">
-									<div class="button-text" id="text0">
-										1. HVAD VAR TURENS VIGTIGSTE FORM&Aring;L ?
-										
+									<div class="button-text" id="text0" i18n:translate="1_formaal">
+										FORM&Aring;L
 									</div>
 								</div>
 								<!--<div id="ba1" class="button-activate">Klik her for at forts&aelig;tte med at tegne din rute</div>-->
 								<div class="instruction" id="instruction0">
-									Vaelg en mulighed her:
+									Hvad var det vitgigste form&aring;l med din seneste cykeltur?<br/>
+									V&aelig;lg en mulighed her:
 									<select id="purpose" name="purpose" onChange="javascript:saveData()">
 										<!-- jquery insert here -->
 									</select>
@@ -62,7 +62,7 @@ i18n:domain="sl.bikeability">
 								
 								<div id="wrapper-1" class="b-wrapper">
 									<div class="button-text" id="text1">
-										2. TEGN DIN RUTE
+										2. TEGN DIN RUTE (klik her)
 									</div>
 								</div>
 								<!--<div id="ba1" class="button-activate">Klik her for at forts&aelig;tte med at tegne din rute</div>-->
@@ -79,15 +79,15 @@ i18n:domain="sl.bikeability">
 																
 									<div id="wrapper-2" class="b-wrapper">
 										<div class="button-text" id="text2" i18n:translate="gode_oplevelser">
-											3. MARK&Eacute;R GODE OPLEVELSER
+											3. MARK&Eacute;R GODE OPLEVELSER (klik her)
 										</div>
 									</div>
 									<!--<div id="ba2" class="button-activate">Klik her for at tilf&oslash;je steder med gode oplevelser</div>-->
 									
 									<div class="instruction" id="instruction2">
-										Mark&eacute;r op til 3 steder hvor du har havde en god oplevelse. Efter du har klikket p&aring; kortet vil vi bede dig om, 
+										Mark&eacute;r op til 3 steder p&aring; din rute hvor du har havde en god oplevelse. Efter du har klikket p&aring; din rute, vil vi bede dig om, 
 										at angive &aring;rsagen til din oplevelse. V&aelig;lg fra menuen og tilf&oslash;j evt. en uddybende kommentar.
-										Du kan flytte p&aring markeringerne ved at &#39;tr&aelig;kke&#39; dem rundt p&aring;, du kan til en hver tid rette i dine indtastinger 
+										Du kan flytte p&aring markeringerne ved at &#39;tr&aelig;kke&#39; dem rundt p&aring;, du kan til en hver tid rette i dine indtastninger 
 										eller slette en markering. Du kan skjule en tekstboks ved at klikke p&aring; krydset. 
 									</div>
 								
@@ -104,12 +104,12 @@ i18n:domain="sl.bikeability">
 								
 									<div id="wrapper-3" class="b-wrapper">
 										<div class="button-text" id="text3" i18n:translate="daarlige_oplevelser">
-											4. MARK&Eacute;R D&Aring;RLIGE OPLEVELSER
+											4. MARK&Eacute;R D&Aring;RLIGE OPLEVELSER (klik her)
 										</div>
 									</div>
 									<!--<div id="ba3" class="button-activate">Klik her for at tilf&oslash;je steder med d&aring;rlige oplevelser</div>-->
 									<div class="instruction" id="instruction3">
-										Mark&eacute;r op til 3 steder hvor du har havde en d&aring;rlig oplevelse. Efter du har klikket p&aring; kortet vil vi bede dig om, 
+										Mark&eacute;r op til 3 steder p&aring; din rute hvor du har havde en d&aring;rlig oplevelse. Efter du har klikket p&aring; din rute, vil vi bede dig om, 
 										at angive &aring;rsagen til din oplevelse. V&aelig;lg fra menuen og tilf&oslash;j evt. en uddybende kommentar. 
 										Du kan flytte p&aring markeringerne ved at &#39;tr&aelig;kke&#39; dem rundt p&aring;, du kan til en hver tid rette i dine indtastinger 
 										eller slette en markering. Du kan skjule en tekstboks ved at klikke p&aring; krydset.
@@ -121,13 +121,12 @@ i18n:domain="sl.bikeability">
 								<div>
 								
 									<div id="wrapper-4" class="b-wrapper">
-										<div class="button-text" id="text3" i18n:translate="daarlige_oplevelser">
-											5. GEM & AFSLUT
-											
+										<div class="button-text" id="text3" i18n:translate="afslut">
+											5. GEM & AFSLUT (klik her)
 										</div>
 										<div id="ajaxBusy">
 												<img src="ajax_wheel.gif"> 
-												<div class="gemmer">... GEMMER ...</div>
+												<div class="gemmer" i18n:translate="saving">... GEMMER ...</div>
 												<div style="clear:both;">
 											</div>
 										

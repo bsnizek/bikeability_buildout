@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
+<<<<<<< HEAD
 	<name>bikeability_buildout</name>
+=======
+	<name>pymapmatching2</name>
+>>>>>>> cc945027fa5fd72a31b6117d61ec64397c8c981e
 	<comment></comment>
 	<projects>
 	</projects>
