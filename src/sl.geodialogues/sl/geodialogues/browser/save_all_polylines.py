@@ -27,7 +27,10 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from config import *
 from geoalchemy import Table, GeometryColumn, Geometry, LineString, Point, GeometryDDL, GeometryExtensionColumn, GeometryCollection, DBSpatialElement, WKTSpatialElement, WKBSpatialElement
 from geoalchemy.postgis import PGComparator, pg_functions
-from osgeo import ogr,osr
+try:
+    from osgeo import ogr,osr
+except:
+    pass
 from plone.memoize.view import memoize
 from random import random
 from sqlalchemy import create_engine, MetaData, Column, Integer, Numeric, String, Boolean, Sequence, ForeignKey

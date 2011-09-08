@@ -28,7 +28,10 @@ from DateTime import DateTime
 from random import random
 from Products.CMFPlone.utils import _createObjectByType
 import sys
-from osgeo import ogr,osr
+try:
+    from osgeo import ogr,osr
+except:
+    pass
 import string
 from Products.CMFCore.utils import getToolByName
 import pprint
