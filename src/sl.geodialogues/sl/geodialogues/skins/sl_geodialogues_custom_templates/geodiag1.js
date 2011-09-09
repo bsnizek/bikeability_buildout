@@ -591,6 +591,7 @@ function initializeButtons() {
 function activateZero() {
 
 	if (STATE==1) {
+		nextState=0;
 		deactivateOne();
 	}
 	
@@ -646,6 +647,7 @@ function deactivateZero() {
 function activateOne() {
 
 	if (STATE==0) {
+		nextState = 0;
 		deactivateZero();
 	}
 	
@@ -710,6 +712,7 @@ function deactivateOne() {
 function activateTwo() {
 	
 	if (STATE==0) {
+		nextState = 0;
 		deactivateZero();
 	}
 	
@@ -749,6 +752,7 @@ function activateTwo() {
 	});
 	
 	placeGoodMarkers();
+	
 	jq("#instruction2").css("color","black");
 
 }
@@ -856,6 +860,7 @@ function deactivateThree() {
 function activateFour() {
 	
 	if (STATE==0) {
+		nextState=0;
 		deactivateZero();
 	}
 	
