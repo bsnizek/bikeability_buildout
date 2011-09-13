@@ -1,9 +1,10 @@
-#Wed Sep 07 12:43:40 CEST 2011
+#Sat Sep 10 13:30:47 CEST 2011
 eclipse.preferences.version=1
 encoding//src/__sl.geoservices/sl/geoservices/browser/config.py=UTF-8
 encoding//src/__sl.geoservices/sl/geoservices/browser/js_bootstrap.py=utf-8
 encoding//src/__sl.geoservices/sl/geoservices/measurement.py=UTF-8
 encoding//src/__sl.geoservices/sl/geoservices/setuphandlers.py=utf-8
+encoding//src/sl.geodialogues/sl/__init__.py=UTF-8
 encoding//src/sl.geodialogues/sl/geodialogues/browser/save_all_points.py=UTF-8
 encoding//src/sl.geodialogues/sl/geodialogues/browser/save_all_polylines.py=UTF-8
 encoding//src/sl.gis/sl/__init__.py=UTF-8

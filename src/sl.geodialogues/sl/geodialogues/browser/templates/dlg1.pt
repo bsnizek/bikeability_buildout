@@ -33,8 +33,9 @@ i18n:domain="sl.bikeability">
 						<div id="map-spacer">
 						</div>
 						
-						<div id="map">
-						</div>
+							<div id="map">
+							</div>
+						
 						<form name="mainform" id="mainform">
 						
 						<div id="button-wrapper">

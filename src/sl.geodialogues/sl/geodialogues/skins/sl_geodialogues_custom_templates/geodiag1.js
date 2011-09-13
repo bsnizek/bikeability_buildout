@@ -28,6 +28,7 @@ var SHOW_GROUPS = true;
 var GOOD_GROUP_VALUES = [['0','V&aelig;lg'],
                          ['fred_og_ro','Fred og ro'],
                          ['endomhed_komme_vaek','Ensomhed/komme v&aelig;k'],
+                         ['skovfoelelse','Skovf&oslash:lelse'],
                          ['natur_og_groenne_omgivelser','Natur og gr&oslash;nne omgivelser'],
                          ['dyreliv','Dyreliv'],
                          ['god_udsigt_vand','God udsigt (vand)'],
@@ -147,6 +148,16 @@ function initPolyline() {
 	polyLine.setMap(map);
 	tmpPolyLine = new google.maps.Polyline(tmpPolyOptions);
 	tmpPolyLine.setMap(map);
+	
+	google.maps.event.addListener(map, 'zoom_changed', function() {
+	    if (map.getZoom()>13) {
+	    	jq("#map").css("border-color","green");
+	    }
+	    if (map.getZoom()<14) {
+	    	jq("#map").css("border-color","red");
+	    }
+	  });
+	
 
 };
 
@@ -591,19 +602,22 @@ function initializeButtons() {
 function activateZero() {
 
 	if (STATE==1) {
-		nextState=0;
+		nextState = 0;
 		deactivateOne();
 	}
 	
 	if (STATE==2) {
+		nextState = 0;
 		deactivateTwo();
 	}
 
 	if (STATE==3) {
+		nextState = 0;
+		
 		deactivateThree();
 	}
 	if (STATE==4) {
-		nextState=1;
+		nextState = 0;
 		deactivateFour();
 	}
 	
@@ -618,11 +632,11 @@ function activateZero() {
 
 	jq("#instruction0").css("color","black");
 	
+	$("#purpose").attr("disabled","");
+	
 }
 
 function deactivateZero() {
-	
-	
 
 	jq("#wrapper-0").css("background-color","#d3d3d3");
 	jq("#b0").css("background-image",'url(dot-grey.png)');
@@ -639,27 +653,32 @@ function deactivateZero() {
 	function(){
      	$(this).css('background-color', '#d3d3d3');
 	});
-	
 	jq("#ba0").show();
+	$("#purpose").attr("disabled","disabled");
+	
+	
 }
 
 
 function activateOne() {
 
 	if (STATE==0) {
-		nextState = 0;
+		nextState = 1;
 		deactivateZero();
 	}
 	
 	if (STATE==2) {
+		nextState = 1;
 		deactivateTwo();
 	}
 
 	if (STATE==3) {
+		nextState = 1;
+		
 		deactivateThree();
 	}
 	if (STATE==4) {
-		nextState=1;
+		nextState = 1;
 		deactivateFour();
 	}
 
@@ -681,7 +700,12 @@ function activateOne() {
 }
 
 function deactivateOne() {
-	google.maps.event.removeListener(polyLineListener);
+	
+	if (polyLineListener) {
+	
+		google.maps.event.removeListener(polyLineListener);
+	}
+	
 	polyLineListener = null;
 	
 	google.maps.event.clearInstanceListeners(map);
@@ -712,7 +736,7 @@ function deactivateOne() {
 function activateTwo() {
 	
 	if (STATE==0) {
-		nextState = 0;
+		nextState = 2;
 		deactivateZero();
 	}
 	
@@ -759,7 +783,9 @@ function activateTwo() {
 
 function deactivateTwo() {
 
-	google.maps.event.removeListener(GOOD_listener);
+	if ( GOOD_listener) {
+		google.maps.event.removeListener(GOOD_listener);
+	}
 	
 	google.maps.event.removeListener(polyLineListenerMarker);
 	
@@ -792,16 +818,18 @@ function deactivateTwo() {
 function activateThree() {
 	
 	if (STATE==0) {
+		nextstate=3;
 		deactivateZero();
+	}
+	
+	if (STATE==1) {
+		nextState=3;
+		deactivateOne();
 	}
 	
 	if (STATE==2) {
 		nextState=3;
 		deactivateTwo();
-	}
-	if (STATE==1) {
-		nextState=3;
-		deactivateOne();
 	}
 	
 	if (STATE==4) {
@@ -810,11 +838,6 @@ function activateThree() {
 	}
 	
 	STATE = 3;
-	/*for (var v=0;v<vmarkers.length;v++) {
-		google.maps.event.addListener(vmarkers[v],'click', function(event) {
-			placeBadMarker(event.latLng);
-		});
-	}*/
 	
 	jq("#wrapper-3").css("background-color","#FF0000");
 	jq("#instruction3").css("color","black");
@@ -833,9 +856,13 @@ function activateThree() {
 
 function deactivateThree() {
 
-	google.maps.event.removeListener(polyLineListenerMarker);
-
-	google.maps.event.removeListener(BAD_listener);
+	if (polyLineListenerMarker) {
+		google.maps.event.removeListener(polyLineListenerMarker);
+	}
+	
+	if (BAD_listener) {
+		google.maps.event.removeListener(BAD_listener);
+	}
 	deactivateMarkerListeners();
 	deactivateVMarkerListeners();
 

@@ -41,11 +41,11 @@ h2 {
 	float:left;
 	width:30em;
 }
-
 #map {
 	float:left;
 	width:500px;
 	height:528px;
+	border:10px solid red;
 }
 
 .deletemarker {
